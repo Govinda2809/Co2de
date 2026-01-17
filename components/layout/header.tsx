@@ -3,7 +3,11 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+<<<<<<< HEAD
 import { Menu, X, Github, BarChart3, LogOut, User as UserIcon } from "lucide-react";
+=======
+import { Menu, X, Github, BarChart3, LogOut, User } from "lucide-react";
+>>>>>>> 499689fa5298b70d7ac393ad928573c9e46d40bf
 import { cn } from "@/lib/utils";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
@@ -136,6 +140,7 @@ export function Header() {
             </div>
           )}
 
+<<<<<<< HEAD
           {user && (
             <div className="relative z-10">
               <button
@@ -157,13 +162,45 @@ export function Header() {
                     href="/dashboard"
                     className="flex items-center gap-4 px-5 py-4 rounded-2xl text-[10px] font-bold uppercase tracking-widest text-gray-400 hover:bg-white/5 hover:text-white transition-all"
                     onClick={() => setShowUserMenu(false)}
+=======
+          {/* User Menu or Sign In */}
+          {user ? (
+            <div
+              className="relative z-10"
+              onMouseEnter={() => setShowUserMenu(true)}
+              onMouseLeave={() => setShowUserMenu(false)}
+            >
+              <button
+                onClick={() => setShowUserMenu(!showUserMenu)}
+                className="flex items-center justify-center px-3 py-2.5 text-gray-400 transition-colors hover:text-white"
+                aria-label="User menu"
+              >
+                <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center border border-white/10">
+                  <User className="w-4 h-4" />
+                </div>
+              </button>
+
+              {showUserMenu && (
+                <div className="absolute right-0 top-full mt-2 w-64 p-2 rounded-2xl border border-white/10 bg-[#0a0a0a]/90 backdrop-blur-2xl shadow-xl animate-in fade-in zoom-in-95 duration-200">
+                  <div className="px-4 py-3 border-b border-white/5 mb-2">
+                    <p className="text-sm font-medium text-white truncate">{user.name}</p>
+                    <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                  </div>
+                  <Link
+                    href="/dashboard"
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors"
+>>>>>>> 499689fa5298b70d7ac393ad928573c9e46d40bf
                   >
                     <BarChart3 size={14} />
                     LEDGER
                   </Link>
                   <button
                     onClick={handleLogout}
+<<<<<<< HEAD
                     className="flex items-center gap-4 px-5 py-4 rounded-2xl text-[10px] font-bold uppercase tracking-widest text-red-500/80 hover:bg-red-500/10 hover:text-red-400 w-full transition-all"
+=======
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300 w-full transition-colors font-medium"
+>>>>>>> 499689fa5298b70d7ac393ad928573c9e46d40bf
                   >
                     <LogOut size={14} />
                     TERMINATE_SESSION
