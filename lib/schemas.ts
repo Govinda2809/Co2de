@@ -15,6 +15,7 @@ export const AIReviewSchema = z.object({
 });
 
 // Matches Appwrite Collection Structure exactly
+// Added optional fields for advanced metrics to maintain backward compatibility
 export const AnalysisItemSchema = z.object({
   $id: z.string().optional(),
   fileName: z.string().min(1),
@@ -28,6 +29,9 @@ export const AnalysisItemSchema = z.object({
   improvement: z.string(),
   createdAt: z.string(),
   userId: z.string().optional(),
+  complexity: z.number().optional(),
+  memPressure: z.number().optional(),
+  lineCount: z.number().optional(),
 });
 
 export type FileUpload = z.infer<typeof FileUploadSchema>;

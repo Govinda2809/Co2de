@@ -3,18 +3,24 @@ import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const allCookies = request.cookies.getAll();
-
-  // Appwrite session cookies start with a_session_
-  const hasAppwriteSession = allCookies.some(cookie =>
-    cookie.name.startsWith('a_session_') || cookie.name === 'a_session'
-  );
+  
+  // Appwrite session cookies typically start with a_session_
+  const hasSession = request.cookies.getAll().some(c => c.name.startsWith('a_session'));
 
   const isProtectedRoute = pathname.startsWith('/dashboard') || pathname.startsWith('/analyze');
   const isAuthRoute = pathname.startsWith('/login') || pathname.startsWith('/signup');
 
-  // Middleware disabled to rely on client-side auth state
-  // This prevents infinite redirect loops on localhost where cookies may not sync to server
+  // Basic redirection logic
+  if (isProtectedRoute && !hasSession) {
+    // We allow /analyze to be viewed but some features might require login
+    // However, for a strict protocol, we redirect to login
+    // return NextResponse.redirect(new URL('/login', request.url));
+  }
+
+  if (isAuthRoute && hasSession) {
+    return NextResponse.redirect(new URL('/dashboard', request.url));
+  }
+
   return NextResponse.next();
 }
 

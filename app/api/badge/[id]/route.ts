@@ -5,51 +5,40 @@ export const runtime = 'edge';
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = params;
+  const { id } = await params;
 
   try {
-    // In a real edge environment with Appwrite, we'd need a server-side client or public read
-    // For this implementation, we'll return a dynamic SVG based on the project's reported score
-    
-    // We try to fetch the document to get the real score
-    // Note: This requires the collection to have 'Any' read permissions or an API Key
-    let score = 8; // Default
+    let score = 8;
     try {
-      const doc = await databases.getDocument(DATABASE_ID, COLLECTION_ID, id);
-      score = doc.score;
+      if (DATABASE_ID && COLLECTION_ID) {
+        const doc = await databases.getDocument(DATABASE_ID, COLLECTION_ID, id);
+        score = doc.score;
+      }
     } catch (e) {
-      // Fallback to a generic badge if ID is not found
+      // Fallback
     }
 
     const getColor = (s: number) => {
-      if (s >= 8) return '#10b981'; // Emerald
-      if (s >= 6) return '#f59e0b'; // Amber
+      if (s >= 9) return '#10b981'; // Emerald
+      if (s >= 7) return '#3b82f6'; // Blue
+      if (s >= 5) return '#f59e0b'; // Amber
       return '#ef4444'; // Red
     };
 
     const color = getColor(score);
-    const label = "CO2DE GRADE";
-    const value = score >= 8 ? 'A+' : score >= 6 ? 'B' : 'C';
+    const value = score >= 9 ? 'A+' : score >= 7 ? 'A' : score >= 5 ? 'B' : 'C';
 
+    // Premium Protocol Badge Design
     const svg = `
-      <svg width="120" height="20" viewBox="0 0 120 20" xmlns="http://www.w3.org/2000/svg">
-        <linearGradient id="g" x2="0" y2="100%">
-          <stop offset="0" stop-color="#bbb" stop-opacity=".1"/>
-          <stop offset="1" stop-opacity=".1"/>
-        </linearGradient>
-        <clipPath id="r">
-          <rect width="120" height="20" rx="3" fill="#fff"/>
-        </clipPath>
-        <g clip-path="url(#r)">
-          <rect width="85" height="20" fill="#555"/>
-          <rect x="85" width="35" height="20" fill="${color}"/>
-          <rect width="120" height="20" fill="url(#g)"/>
-        </g>
-        <g fill="#fff" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" font-size="110">
-          <text x="435" y="140" transform="scale(.1)" textLength="750">${label}</text>
-          <text x="1025" y="140" transform="scale(.1)" font-weight="bold" textLength="250">${value}</text>
+      <svg width="110" height="20" viewBox="0 0 110 20" xmlns="http://www.w3.org/2000/svg" shape-rendering="geometricPrecision">
+        <rect width="110" height="20" rx="4" fill="#0a0a0a"/>
+        <path d="M0 4C0 1.79086 1.79086 0 4 0H75V20H4C1.79086 20 0 18.2091 0 16V4Z" fill="#1a1a1a"/>
+        <path d="M75 0H106C108.209 0 110 1.79086 110 4V16C110 18.2091 108.209 20 106 20H75V0Z" fill="${color}"/>
+        <g fill="#fff" font-family="Inter, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-weight="800" font-size="8" letter-spacing="0.1em">
+          <text x="37" y="13" text-anchor="middle" opacity="0.5">CO2DE</text>
+          <text x="92.5" y="13" text-anchor="middle">${value}</text>
         </g>
       </svg>
     `.trim();

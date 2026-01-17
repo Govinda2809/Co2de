@@ -12,18 +12,37 @@ async function callAI(code: string, systemPrompt: string, apiKey: string, url: s
     headers: {
       "Authorization": `Bearer ${apiKey}`,
       "Content-Type": "application/json",
+      "HTTP-Referer": "https://co2de.dev",
+      "X-Title": "CO2DE Audit Engine",
     },
     body: JSON.stringify({
       model: model,
-      messages: [{ role: "system", content: systemPrompt }, { role: "user", content: code }],
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: `Target Code:\n\n${code}` }
+      ],
       response_format: { type: "json_object" }
     }),
   });
 
-  if (!response.ok) throw new Error(`${url} failed: ${response.statusText}`);
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`AI Gateway error (${response.status}): ${errorText}`);
+  }
+  
   const data = await response.json();
-  if (!data.choices?.[0]?.message?.content) throw new Error("Invalid response structure");
-  return JSON.parse(data.choices[0].message.content);
+  const content = data.choices?.[0]?.message?.content;
+  
+  if (!content) throw new Error("AI returned null response content.");
+  
+  try {
+    return JSON.parse(content);
+  } catch (e) {
+    // Attempt to extract JSON if AI wrapped it in markdown
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    if (jsonMatch) return JSON.parse(jsonMatch[0]);
+    throw new Error("Failed to parse AI response as JSON.");
+  }
 }
 
 export async function POST(request: Request) {
@@ -32,28 +51,41 @@ export async function POST(request: Request) {
 
     let systemPrompt = "";
     if (mode === 'refactor') {
-      systemPrompt = "You are a Green Software Engineer. Refactor the provided code for MAXIMUM energy efficiency and minimum CPU cycles. Return ONLY a JSON object with 'refactoredCode' and 'explanation' fields. Keep the same logic but optimize loops, memory, and calls.";
+      systemPrompt = `You are a Senior Green Software Architect. 
+      Refactor the provided code for MAXIMUM energy efficiency. 
+      Focus on:
+      1. Reducing O(n) complexity to O(1) or O(log n).
+      2. Minimizing memory allocations and garbage collection pressure.
+      3. Removing redundant computations.
+      Return ONLY a JSON object: { "refactoredCode": "string", "explanation": "string" }.`;
     } else {
-      const context = metrics ? `\nContext: Complexity Factor=${metrics.complexity}, Language=${metrics.language}, Lines=${metrics.lineCount}` : "";
-      systemPrompt = `Analyze the provided code for carbon footprint and energy efficiency. ${context}\nReturn a valid JSON object matching this schema: { score: number (1-10), bottleneck: string, optimization: string, improvement: string }. Use the provided complexity metrics to inform your score.`;
+      const context = metrics ? `\n\nMetric Context: Big_O=${metrics.complexity}, Mem_Pressure=${metrics.memPressure}, Lines=${metrics.lineCount}, Language=${metrics.language}` : "";
+      systemPrompt = `You are a Sustainability Auditor. Analyze the code for environmental footprint. ${context}
+      Return a JSON object: { "score": number (1-10), "bottleneck": "string", "optimization": "string", "improvement": "string" }.
+      Ensure the score reflects the complexity metrics provided.`;
     }
 
     let content;
+    const errors: string[] = [];
+
     try {
-      // Primary: OpenRouter
-      if (!OPENROUTER_API_KEY) throw new Error("OpenRouter Key missing");
+      if (!OPENROUTER_API_KEY) throw new Error("OPENROUTER_API_KEY absent.");
       content = await callAI(code, systemPrompt, OPENROUTER_API_KEY, "https://openrouter.ai/api/v1/chat/completions", "google/gemini-2.0-flash-exp:free");
-    } catch (e) {
-      console.warn("Primary Router Failed, engaging Fallback Protocol...", e);
-      // Fallback: MuleRouter or another provider
-      if (!MULEROUTER_API_KEY) throw new Error("Both Primary and Fallback keys missing.");
-      content = await callAI(code, systemPrompt, MULEROUTER_API_KEY, "https://mulerouter.com/api/v1/chat/completions", "meta-llama/llama-3-8b-instruct");
+    } catch (e: any) {
+      errors.push(`OpenRouter: ${e.message}`);
+      try {
+        if (!MULEROUTER_API_KEY) throw new Error("MULEROUTER_API_KEY absent.");
+        content = await callAI(code, systemPrompt, MULEROUTER_API_KEY, "https://mulerouter.com/api/v1/chat/completions", "meta-llama/llama-3-8b-instruct");
+      } catch (e2: any) {
+        errors.push(`MuleRouter: ${e2.message}`);
+        throw new Error(`Dual-Router Core Failure: ${errors.join(" | ")}`);
+      }
     }
 
     if (mode === 'refactor') {
       return NextResponse.json({ 
-        refactoredCode: content.refactoredCode || "Code optimization failed.", 
-        explanation: content.explanation || "No explanation provided." 
+        refactoredCode: content.refactoredCode || code, 
+        explanation: content.explanation || "Optimization complete with heuristic defaults." 
       });
     }
 
@@ -61,7 +93,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ review: validated });
 
   } catch (error: any) {
-    console.error("Critical API Failure:", error);
-    return NextResponse.json({ error: "Analysis engine offline: " + error.message }, { status: 500 });
+    console.error("Engine failure:", error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

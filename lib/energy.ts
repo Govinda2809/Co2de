@@ -2,20 +2,16 @@ import { AIReview } from './schemas';
 import * as acorn from 'acorn';
 import * as walk from 'acorn-walk';
 
-// Avg Energy Multiplier: Roughly 0.1Wh per 1k lines/complexity unit
 const ENERGY_MULTIPLIER = 0.0001;
 
-// REGIONAL PUE (Power Usage Effectiveness)
-// Lower is better. 1.1 = Highly efficient (Google/Microsoft), 1.6 = Standard
 export const REGIONS = {
-  "north-america": { label: "North America (PUE 1.15)", factor: 1.15, intensity: 450 },
-  "europe": { label: "Europe (PUE 1.12)", factor: 1.12, intensity: 320 },
-  "asia": { label: "Asia (PUE 1.35)", factor: 1.35, intensity: 580 },
-  "australia": { label: "Australia (PUE 1.40)", factor: 1.4, intensity: 620 },
-  "nordics": { label: "Nordics (PUE 1.08)", factor: 1.08, intensity: 120 },
+  "north-america": { label: "North America (PUE 1.15)", factor: 1.15, intensity: 450, bestHour: 3 },
+  "europe": { label: "Europe (PUE 1.12)", factor: 1.12, intensity: 320, bestHour: 4 },
+  "asia": { label: "Asia (PUE 1.35)", factor: 1.35, intensity: 580, bestHour: 2 },
+  "australia": { label: "Australia (PUE 1.40)", factor: 1.4, intensity: 620, bestHour: 1 },
+  "nordics": { label: "Nordics (PUE 1.08)", factor: 1.08, intensity: 120, bestHour: 12 },
 };
 
-// HARDWARE PROFILES (Energy Draw per instruction base)
 export const HARDWARE_PROFILES = {
   "mobile": { label: "Mobile (ARM)", factor: 0.4 },
   "laptop": { label: "Workstation", factor: 1.0 },
@@ -23,21 +19,7 @@ export const HARDWARE_PROFILES = {
 };
 
 const LANGUAGE_MULTIPLIERS: Record<string, number> = {
-  "js": 1.0,
-  "jsx": 1.05,
-  "ts": 1.1,
-  "tsx": 1.15,
-  "py": 1.8,
-  "rs": 0.4,
-  "go": 0.6,
-  "cpp": 0.35,
-  "c": 0.3,
-  "h": 0.3,
-  "java": 1.4,
-  "swift": 0.9,
-  "kotlin": 1.25,
-  "rb": 1.9,
-  "php": 1.6,
+  "js": 1.0, "jsx": 1.05, "ts": 1.1, "tsx": 1.15, "py": 1.8, "rs": 0.4, "go": 0.6, "cpp": 0.35, "c": 0.3, "h": 0.3, "java": 1.4, "swift": 0.9, "kotlin": 1.25, "rb": 1.9, "php": 1.6,
 };
 
 export function detectLanguage(fileName: string): string {
@@ -48,67 +30,74 @@ export function detectLanguage(fileName: string): string {
 export async function getGridIntensity(region: string = "europe"): Promise<number> {
   const base = (REGIONS as any)[region]?.intensity || 320;
   const currentHour = new Date().getHours();
-  // Simulate peak/off-peak logic
   const intensityFactor = currentHour > 22 || currentHour < 6 ? 0.75 : 1.15;
   return Math.round(base * intensityFactor);
 }
 
-function calculateASTComplexity(content: string, lang: string): number {
+function calculateASTComplexity(content: string, lang: string): { complexity: number, memPressure: number, recursionDetected: boolean } {
   let complexity = 1.0;
+  let memPressure = 1.0;
+  let recursionDetected = false;
   const isJSish = ['js', 'jsx', 'ts', 'tsx'].includes(lang);
   
-  if (!isJSish) return estimateComplexityRegex(content);
+  if (!isJSish) return { complexity: estimateComplexityRegex(content), memPressure: 1.0, recursionDetected: false };
 
   try {
-    // Attempt to parse JS/TS style content
     const tree = acorn.parse(content, { ecmaVersion: 'latest', sourceType: 'module' });
     let loopCount = 0;
     let bigOfactor = 0;
+    let allocations = 0;
 
     walk.simple(tree, {
       ForStatement() { loopCount++; },
       WhileStatement() { loopCount++; },
       DoWhileStatement() { loopCount++; },
       FunctionDeclaration(node: any) {
+        const funcName = node.id?.name;
         let nested = 0;
-        walk.simple(node.body, {
-          ForStatement() { nested++; },
+        let selfCall = false;
+        
+        walk.simple(node.body, { 
+          ForStatement() { nested++; }, 
           WhileStatement() { nested++; },
+          CallExpression(callNode: any) {
+            if (funcName && (callNode.callee.name === funcName || (callNode.callee.property && callNode.callee.property.name === funcName))) {
+              selfCall = true;
+            }
+          }
         });
+        
         if (nested > 1) bigOfactor += 0.8;
+        if (selfCall) {
+          recursionDetected = true;
+          bigOfactor += 1.5; // High cost for recursion
+        }
+      },
+      VariableDeclarator(node: any) {
+        if (node.init?.type === 'ArrayExpression' || node.init?.type === 'ObjectExpression') {
+          allocations += 0.2;
+        }
       },
       CallExpression(node: any) {
-        if (node.callee.property && ['map', 'filter', 'forEach', 'reduce'].includes(node.callee.property.name)) {
+        if (node.callee.property && ['map', 'filter', 'forEach', 'reduce', 'push', 'concat'].includes(node.callee.property.name)) {
           loopCount += 0.5;
         }
       }
     });
     complexity += (loopCount * 0.15) + bigOfactor;
+    memPressure += allocations;
   } catch (e) {
-    return estimateComplexityRegex(content);
+    return { complexity: estimateComplexityRegex(content), memPressure: 1.0, recursionDetected: false };
   }
-  return Math.min(complexity, 5.0);
+  return { complexity: Math.min(complexity, 5.0), memPressure: Math.min(memPressure, 2.5), recursionDetected };
 }
 
 function estimateComplexityRegex(content: string): number {
   let complexity = 1.0;
   const loopPatterns = /\b(for|while|do|forEach|map|filter|reduce)\b/g;
   const loops = (content.match(loopPatterns) || []).length;
-  complexity += loops * 0.1;
-  const nestedPatterns = /\{\s*\{|\[\s*\[/g;
-  const nested = (content.match(nestedPatterns) || []).length;
-  complexity += nested * 0.15;
+  complexity += loops * 0.15;
   return Math.min(complexity, 3.0);
-}
-
-export function getDeterministicReview(code: string, metrics: any): AIReview {
-  const score = Math.max(1, 10 - Math.floor(metrics.complexity * 2));
-  return {
-    score,
-    bottleneck: metrics.complexity > 2 ? "High time complexity detected via structural analysis." : "Standard execution overhead.",
-    optimization: metrics.complexity > 2 ? "Refactor nested logic into O(1) mappings." : "Optimize variable lifecycles.",
-    improvement: `${Math.round(metrics.complexity * 5)}% Energy reduction possible.`
-  };
 }
 
 export async function calculateEnergyMetrics(
@@ -120,15 +109,14 @@ export async function calculateEnergyMetrics(
 ) {
   const lineCount = content ? content.split('\n').length : Math.ceil(fileSize / 50);
   const lang = detectLanguage(fileName);
-  const complexity = content ? calculateASTComplexity(content, lang) : 1;
+  const { complexity, memPressure, recursionDetected } = content ? calculateASTComplexity(content, lang) : { complexity: 1, memPressure: 1, recursionDetected: false };
   const langMultiplier = LANGUAGE_MULTIPLIERS[lang] || 1.0;
   
   const regionData = (REGIONS as any)[region] || REGIONS.europe;
   const hardwareData = (HARDWARE_PROFILES as any)[hardware] || HARDWARE_PROFILES.laptop;
 
   const baseEnergy = (fileSize / 1024) * ENERGY_MULTIPLIER;
-  // Final Adjusted Energy considering Hardware and Datacenter Efficiency (PUE)
-  const adjustedEnergy = baseEnergy * complexity * langMultiplier * hardwareData.factor * regionData.factor * (1 + lineCount / 1000);
+  const adjustedEnergy = baseEnergy * complexity * memPressure * langMultiplier * hardwareData.factor * regionData.factor * (1 + lineCount / 1000);
   
   const gridIntensity = await getGridIntensity(region); 
   const estimatedCO2 = adjustedEnergy * gridIntensity;
@@ -140,8 +128,10 @@ export async function calculateEnergyMetrics(
     co2Unit: 'gCO2e',
     gridIntensity,
     lineCount,
-    language: lang,
+    language: lang.toUpperCase(),
     complexity: Math.round(complexity * 100) / 100,
+    memPressure: Math.round(memPressure * 100) / 100,
+    recursionDetected
   };
 }
 
@@ -158,6 +148,16 @@ export async function getAIReview(code: string, metrics?: any): Promise<AIReview
   } catch (e) {
     return getDeterministicReview(code, metrics || { complexity: 1, language: 'js', lineCount: code.split('\n').length });
   }
+}
+
+export function getDeterministicReview(code: string, metrics: any): AIReview {
+  const score = Math.max(1, 10 - Math.floor(metrics.complexity * 2));
+  return {
+    score,
+    bottleneck: metrics.complexity > 2 ? "High time complexity detected via structural analysis." : "Standard execution overhead.",
+    optimization: metrics.recursionDetected ? "Deep recursion detected. Convert to iterative approach to save stack cycles." : metrics.complexity > 2 ? "Refactor nested logic into O(1) mappings." : "Optimize variable lifecycles.",
+    improvement: `${Math.round(metrics.complexity * 5)}% Energy reduction possible.`
+  };
 }
 
 export async function getAIRefactor(code: string): Promise<{ refactoredCode: string; explanation: string }> {
