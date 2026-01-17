@@ -1,14 +1,14 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { FileUpload } from "@/components/upload";
 import { MetricsDisplay, EnergyScoreChart, AIReviewCard } from "@/components/dashboard";
-import { calculateEnergyMetrics, REGIONS, HARDWARE_PROFILES } from "@/lib/energy";
+import { calculateEnergyMetrics, REGIONS, HARDWARE_PROFILES, getGridIntensity } from "@/lib/energy";
 import { AnalysisItemSchema, AIReview } from "@/lib/schemas";
-import { Sparkles, RotateCcw, Loader2, Zap, TrendingUp, BarChart3, Globe, Cpu, Play, Terminal, CheckCircle2, Files, FileCode } from "lucide-react";
-import { storage, databases, DATABASE_ID, COLLECTION_ID, BUCKET_ID, ID } from "@/lib/appwrite";
+import { Sparkles, RotateCcw, Loader2, Zap, TrendingUp, BarChart3, Globe, Cpu, Play, Terminal, CheckCircle2, Files, FileCode, Info } from "lucide-react";
+import { databases, DATABASE_ID, COLLECTION_ID, ID } from "@/lib/appwrite";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 
@@ -50,6 +50,52 @@ export default function AnalyzePage() {
     }
   }, [user, authLoading, router]);
 
+  // Unified Metric Recomputation
+  const recomputeMetrics = useCallback(async (files: File[], contents: string[], targetRegion: string, targetHardware: string) => {
+    try {
+      let totalEnergy = 0;
+      let totalCO2 = 0;
+      let maxComplexity = 0;
+      let totalLines = 0;
+
+      for (let i = 0; i < files.length; i++) {
+        const m = await calculateEnergyMetrics(files[i].size, files[i].name, contents[i], targetRegion, targetHardware);
+        totalEnergy += m.estimatedEnergy;
+        totalCO2 += m.estimatedCO2;
+        maxComplexity = Math.max(maxComplexity, m.complexity);
+        totalLines += m.lineCount;
+      }
+
+      const gridIntensity = await (await import("@/lib/energy")).getGridIntensity(targetRegion);
+
+      return {
+        estimatedEnergy: Math.round(totalEnergy * 1000) / 1000,
+        estimatedCO2: Math.round(totalCO2 * 100) / 100,
+        gridIntensity,
+        lineCount: totalLines,
+        complexity: maxComplexity,
+        energyUnit: 'kWh',
+        co2Unit: 'gCO2e'
+      };
+    } catch (e) {
+      console.error("Metric computation failed:", e);
+      return null;
+    }
+  }, []);
+
+  // Handle parameter changes (Region/Hardware)
+  useEffect(() => {
+    if (state.files.length > 0 && !state.isAnalyzing) {
+      const triggerUpdate = async () => {
+        const updatedMetrics = await recomputeMetrics(state.files, state.contents, state.region, state.hardware);
+        if (updatedMetrics) {
+          setState(prev => ({ ...prev, metrics: updatedMetrics }));
+        }
+      };
+      triggerUpdate();
+    }
+  }, [state.region, state.hardware, state.files, state.contents, state.isAnalyzing, recomputeMetrics]);
+
   const handleFilesAccepted = useCallback(async (processed: { file: File, content: string }[]) => {
     const files = processed.map(p => p.file);
     const contents = processed.map(p => p.content);
@@ -58,39 +104,12 @@ export default function AnalyzePage() {
     setError(null);
 
     try {
-      let totalEnergy = 0;
-      let totalCO2 = 0;
-      let avgScore = 0;
-      let maxComplexity = 0;
-      let totalLines = 0;
+      const metrics = await recomputeMetrics(files, contents, state.region, state.hardware);
+      if (!metrics) throw new Error("Could not compute metrics for the provided packet.");
 
-      // Aggregate findings for all files
-      for (let i = 0; i < processed.length; i++) {
-        const m = await calculateEnergyMetrics(processed[i].file.size, processed[i].file.name, processed[i].content, state.region, state.hardware);
-        totalEnergy += m.estimatedEnergy;
-        totalCO2 += m.estimatedCO2;
-        maxComplexity = Math.max(maxComplexity, m.complexity);
-        totalLines += m.lineCount;
-      }
-
-      // Analyze the largest/most complex file for the AI Review
-      const mainIndex = 0; // In a real app we might pick the largest
+      const mainIndex = 0; // Entry point
       const { getAIReview } = await import("@/lib/energy");
-      const review = await getAIReview(contents[mainIndex], { 
-        complexity: maxComplexity, 
-        language: files[mainIndex].name.split('.').pop(),
-        lineCount: totalLines
-      });
-
-      const metrics = {
-        estimatedEnergy: Math.round(totalEnergy * 1000) / 1000,
-        estimatedCO2: Math.round(totalCO2 * 100) / 100,
-        gridIntensity: await (await import("@/lib/energy")).getGridIntensity(state.region),
-        lineCount: totalLines,
-        complexity: maxComplexity,
-        energyUnit: 'kWh',
-        co2Unit: 'gCO2e'
-      };
+      const review = await getAIReview(contents[mainIndex], metrics);
 
       if (user && DATABASE_ID && COLLECTION_ID) {
         const validated = AnalysisItemSchema.parse({
@@ -111,10 +130,10 @@ export default function AnalyzePage() {
 
       setState((prev) => ({ ...prev, metrics, review, isAnalyzing: false }));
     } catch (err: any) {
-      setError("Multi-file audit failed. Ensure all objects are text-based.");
+      setError(err.message || "Audit failed. Ensure files are valid text objects.");
       setState((prev) => ({ ...prev, isAnalyzing: false }));
     }
-  }, [user, state.region, state.hardware]);
+  }, [user, state.region, state.hardware, recomputeMetrics]);
 
   const handleRefactor = async () => {
     if (state.contents.length === 0) return;
@@ -130,27 +149,27 @@ export default function AnalyzePage() {
   };
 
   const runCode = () => {
-    setState(prev => ({ ...prev, isRunning: true, runResults: ["Initializing Multi-Object Sandbox...", `Linking ${state.files.length} Resources...`] }));
+    setState(prev => ({ ...prev, isRunning: true, runResults: ["Initializing Sandbox Environment...", "Checking Memory Constraints..."] }));
     
     setTimeout(() => {
       try {
         const logs: string[] = [];
         const captureLog = (...args: any[]) => logs.push(args.map(a => String(a)).join(" "));
         
-        // Execute main file (index 0)
+        // Execute primary entry point
         const sandbox = new Function("console", state.contents[0]);
         sandbox({ log: captureLog, error: captureLog, warn: captureLog });
         
         setState(prev => ({ 
           ...prev, 
           isRunning: false, 
-          runResults: [...prev.runResults, "✅ Primary Entry Success.", ...logs] 
+          runResults: [...prev.runResults, "✅ Execution Sequence Successful.", ...logs] 
         }));
       } catch (e: any) {
         setState(prev => ({ 
           ...prev, 
           isRunning: false, 
-          runResults: [...prev.runResults, "❌ Runtime Error in Entry:", e.message] 
+          runResults: [...prev.runResults, "❌ Runtime Error Detected:", e.message] 
         }));
       }
     }, 1500);
@@ -178,7 +197,7 @@ export default function AnalyzePage() {
             <div className="space-y-6">
               <div className="flex items-center gap-3">
                 <div className="h-px w-10 bg-emerald-500" />
-                <h2 className="text-[10px] font-mono text-emerald-500 uppercase tracking-[0.5em]">Repository.Audit_v3</h2>
+                <h2 className="text-[10px] font-mono text-emerald-500 uppercase tracking-[0.5em]">Protocol.Analyze_v3</h2>
               </div>
               <h1 className="text-6xl lg:text-[7rem] font-black tracking-tighter uppercase leading-[0.8] text-white">
                 Green <br /> Your <br /> <span className="text-emerald-500 italic">Codebase</span>_
@@ -247,7 +266,11 @@ export default function AnalyzePage() {
                 <h2 className="text-4xl font-black flex items-center gap-4 text-white tracking-tighter uppercase">
                   Audit_Summary_Report
                 </h2>
-                <p className="text-[10px] font-mono text-gray-500 uppercase tracking-widest">Verified across {state.files.length} active objects</p>
+                <div className="flex items-center gap-4">
+                  <p className="text-[10px] font-mono text-emerald-500 uppercase tracking-widest">Verified across {state.files.length} active objects</p>
+                  <div className="h-1 w-1 rounded-full bg-white/20" />
+                  <p className="text-[10px] font-mono text-gray-500 uppercase tracking-widest italic">{state.metrics.gridIntensity} gCO2e Current_Intensity</p>
+                </div>
               </div>
               <div className="flex flex-wrap items-center justify-center gap-4">
                 <button
@@ -272,9 +295,15 @@ export default function AnalyzePage() {
                 <div className="absolute top-0 right-0 p-12 opacity-5 pointer-events-none group-hover:scale-110 transition-transform duration-1000">
                   <Terminal size={200} className="text-emerald-500" />
                 </div>
-                <div className="flex items-center gap-4 border-b border-emerald-500/10 pb-6">
-                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="text-xs font-mono uppercase tracking-[0.5em] text-emerald-500 font-bold">Realtime.Console_Output</span>
+                <div className="flex items-center justify-between border-b border-emerald-500/10 pb-6">
+                  <div className="flex items-center gap-4">
+                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="text-xs font-mono uppercase tracking-[0.5em] text-emerald-500 font-bold">Realtime.Console_Output</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-[10px] font-mono text-emerald-500/40 uppercase">
+                    <Info size={12} />
+                    Sandbox Memory Isolated
+                  </div>
                 </div>
                 <div className="font-mono text-[11px] space-y-4 uppercase opacity-80 max-h-64 overflow-y-auto custom-scrollbar pr-4">
                   {state.runResults.map((line, i) => (
@@ -293,6 +322,13 @@ export default function AnalyzePage() {
               <div className="p-12 rounded-[3.5rem] border border-white/10 bg-white/[0.02] backdrop-blur-3xl relative overflow-hidden">
                 <h3 className="text-[10px] font-mono font-bold mb-12 text-gray-500 uppercase tracking-[0.5em]">Efficiency.Trajectory</h3>
                 <EnergyScoreChart score={state.review.score} />
+                <div className="mt-8 p-6 rounded-2xl bg-white/[0.02] border border-white/5 flex items-start gap-4">
+                   <Zap size={16} className="text-amber-500 shrink-0 mt-1" />
+                   <div className="space-y-1">
+                      <p className="text-[10px] font-bold text-white uppercase tracking-widest">Hardware Intensity: {state.hardware === 'server' ? 'High' : 'Optimized'}</p>
+                      <p className="text-[10px] text-gray-500 lowercase leading-relaxed">The {state.hardware} profile affects the instruction-level energy draw base.</p>
+                   </div>
+                </div>
               </div>
 
               <div className="space-y-8">

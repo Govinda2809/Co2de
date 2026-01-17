@@ -139,7 +139,7 @@ export async function getAIReview(code: string, metrics?: any): Promise<AIReview
     const response = await fetch('/api/analyze', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code, mode: 'analyze' }),
+      body: JSON.stringify({ code, metrics, mode: 'analyze' }),
     });
     if (!response.ok) throw new Error();
     const data = await response.json();
