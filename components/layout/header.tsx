@@ -3,11 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-<<<<<<< HEAD
-import { Menu, X, Github, BarChart3, LogOut, User as UserIcon } from "lucide-react";
-=======
 import { Menu, X, Github, BarChart3, LogOut, User } from "lucide-react";
->>>>>>> 499689fa5298b70d7ac393ad928573c9e46d40bf
 import { cn } from "@/lib/utils";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";

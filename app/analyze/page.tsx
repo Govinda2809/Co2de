@@ -1,12 +1,8 @@
 "use client";
 
-<<<<<<< HEAD
-import { useState, useCallback } from "react";
-import Link from "next/link";
-=======
 import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
->>>>>>> 499689fa5298b70d7ac393ad928573c9e46d40bf
+import Link from "next/link";
 import { FileUpload } from "@/components/upload";
 import { MetricsDisplay, EnergyScoreChart, AIReviewCard } from "@/components/dashboard";
 import { calculateEnergyMetrics } from "@/lib/energy";
