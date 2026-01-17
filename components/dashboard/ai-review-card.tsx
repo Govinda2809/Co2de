@@ -52,18 +52,18 @@ export function AIReviewCard({ review, className }: AIReviewCardProps) {
         {items.map((item, index) => (
           <div
             key={item.label}
-            className="p-4 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900"
+            className="p-4 rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm hover:bg-white/10 transition-colors"
             style={{ animationDelay: `${index * 150}ms` }}
           >
-            <div className="flex items-start gap-3">
+            <div className="flex items-start gap-4">
               <div className={cn("p-2 rounded-lg shrink-0", item.bgColor)}>
                 <item.icon className={cn("w-4 h-4", item.color)} />
               </div>
               <div className="min-w-0">
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
+                <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">
                   {item.label}
                 </p>
-                <p className="text-sm">{item.value}</p>
+                <p className="text-sm text-gray-300 leading-relaxed">{item.value}</p>
               </div>
             </div>
           </div>

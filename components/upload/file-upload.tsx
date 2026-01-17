@@ -94,25 +94,25 @@ export function FileUpload({ onFileAccepted, isLoading, acceptedFile, onClear }:
       <div className="flex flex-col items-center justify-center py-16 px-8">
         <div
           className={cn(
-            "p-4 rounded-full mb-4 transition-all duration-300",
-            isDragActive ? "bg-emerald-500/20 scale-110" : "bg-gray-100 dark:bg-gray-800"
+            "p-5 rounded-3xl mb-6 transition-all duration-500 shadow-2xl",
+            isDragActive ? "bg-white/20 scale-110 rotate-12" : "bg-white/5 border border-white/10"
           )}
         >
           <Upload
             className={cn(
-              "w-8 h-8 transition-colors",
-              isDragActive ? "text-emerald-500" : "text-gray-500"
+              "w-10 h-10 transition-colors",
+              isDragActive ? "text-white" : "text-gray-500"
             )}
           />
         </div>
-        <p className="text-lg font-semibold mb-2">
-          {isDragActive ? "Drop your code here" : "Drag & drop your code file"}
+        <p className="text-xl font-bold mb-2 text-white">
+          {isDragActive ? "DROP TO ANALYZE" : "SUBMIT YOUR CODE"}
         </p>
-        <p className="text-sm text-gray-500 text-center">
-          Supports .js, .ts, .tsx, .py, .java, .rs, .go, .c, .cpp, and more
+        <p className="text-sm text-gray-500 text-center max-w-xs uppercase tracking-widest font-mono">
+          Supports .js, .ts, .py, .java, .rs, .go etc.
         </p>
-        <button className="mt-4 px-4 py-2 text-sm font-medium text-emerald-600 hover:text-emerald-700 transition-colors">
-          or click to browse
+        <button className="mt-6 px-6 py-2 rounded-full border border-white/20 text-xs font-bold text-gray-400 hover:text-white hover:bg-white/5 transition-all uppercase tracking-widest">
+          or select manually
         </button>
       </div>
     </div>

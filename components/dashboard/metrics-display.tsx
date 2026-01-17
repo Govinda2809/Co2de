@@ -59,16 +59,16 @@ export function MetricsDisplay({ metrics, className }: MetricsDisplayProps) {
       {cards.map((card, index) => (
         <div
           key={card.label}
-          className="relative overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4 hover:border-emerald-500/30 transition-colors group"
+          className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md p-4 hover:border-white/20 transition-all group hover:-translate-y-1"
           style={{ animationDelay: `${index * 100}ms` }}
         >
-          <div className={cn("inline-flex p-2 rounded-lg mb-3 group-hover:scale-110 transition-transform", card.bgColor)}>
+          <div className={cn("inline-flex p-2 rounded-xl mb-3 group-hover:scale-110 transition-transform", card.bgColor)}>
             <card.icon className={cn("w-5 h-5", card.color)} />
           </div>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">{card.label}</p>
+          <p className="text-xs text-gray-500 font-bold uppercase tracking-widest mb-1">{card.label}</p>
           <div className="flex items-baseline gap-1">
-            <span className="text-2xl font-bold">{card.value}</span>
-            <span className="text-sm text-gray-500">{card.unit}</span>
+            <span className="text-2xl font-bold text-white">{card.value}</span>
+            <span className="text-xs text-gray-400 font-mono">{card.unit}</span>
           </div>
         </div>
       ))}

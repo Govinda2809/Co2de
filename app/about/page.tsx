@@ -1,150 +1,111 @@
 import { Metadata } from "next";
-import { Leaf, Zap, Globe, Code, Users, Target } from "lucide-react";
+import { Zap, Globe, Code, ArrowRight } from "lucide-react";
+import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "About",
-  description: "Learn about CO2DE and our mission for sustainable software development",
+  title: "Protocol — About",
+  description: "Understanding the environmental footprint of digital infrastructure.",
 };
 
 const stats = [
-  { value: "2-4%", label: "of global emissions from tech" },
-  { value: "2045", label: "tech could match aviation emissions" },
-  { value: "1.6B", label: "tons of CO₂ from software annually" },
+  { value: "2-4%", label: "global emissons from tech" },
+  { value: "9%", label: "annual energy growth" },
+  { value: "1.6B", label: "tons of CO₂ from code" },
 ];
 
 const principles = [
   {
     icon: Zap,
-    title: "Energy Efficiency",
-    description: "Write code that does more with less. Optimize algorithms, reduce unnecessary computations, and minimize resource usage.",
+    title: "COMPUTATIONAL DENSITY",
+    description: "Write code that does more with less. Optimized algorithms are the first line of defense against hardware expansion.",
   },
   {
     icon: Globe,
-    title: "Carbon Awareness",
-    description: "Understand when and where your software runs. Consider the carbon intensity of the power grid in your optimization decisions.",
+    title: "TEMPORAL SHIFTING",
+    description: "Understand the grid. Software should be carbon-aware, shifting workloads to periods of high renewable energy availability.",
   },
   {
     icon: Code,
-    title: "Hardware Efficiency",
-    description: "Use the minimum hardware resources needed. Efficient code means fewer servers, less cooling, and reduced environmental impact.",
+    title: "HARDWARE LONGEVITY",
+    description: "Efficient code extends hardware lifecycles. Reducing CPU/RAM demand directly minimizes the need for high-turnover server hardware.",
   },
 ];
 
 export default function AboutPage() {
   return (
-    <div className="py-12">
-      <div className="container mx-auto px-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-sm font-medium mb-6">
-              <Leaf className="w-4 h-4" />
-              About CO2DE
+    <div className="bg-[#0a0a0a] min-h-screen text-white py-32 px-4 selection:bg-white selection:text-black">
+      <div className="container mx-auto max-w-6xl">
+        
+        {/* HERO SECTION */}
+        <div className="mb-32">
+          <div className="flex items-center gap-4 mb-8">
+            <div className="h-px w-12 bg-white" />
+            <span className="text-[10px] font-mono tracking-[0.5em] uppercase text-gray-500">Manifesto v1.0</span>
+          </div>
+          <h1 className="text-5xl sm:text-8xl font-black tracking-tighter uppercase leading-[0.8] mb-12">
+            The Code <br /> Is The <br /> <span className="text-emerald-500">Footprint</span>.
+          </h1>
+          <p className="text-xl sm:text-2xl text-gray-400 font-medium leading-relaxed max-w-3xl">
+            In an era of rapid digital expansion, we believe efficiency is no longer just a performance metric—it is an environmental necessity.
+          </p>
+        </div>
+
+        {/* STATS STRIP */}
+        <div className="grid md:grid-cols-3 gap-8 mb-32 py-12 border-y border-white/10">
+          {stats.map((stat, i) => (
+            <div key={i} className="space-y-2">
+              <p className="text-5xl font-black tracking-tighter text-white">{stat.value}</p>
+              <p className="text-[10px] font-mono uppercase tracking-widest text-gray-500">{stat.label}</p>
             </div>
-            <h1 className="text-4xl sm:text-5xl font-bold mb-6">
-              Building a Greener
-              <br />
-              <span className="gradient-text">Digital Future</span>
-            </h1>
-            <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-              CO2DE helps developers understand and reduce the environmental impact of their code,
-              one file at a time.
-            </p>
+          ))}
+        </div>
+
+        {/* CORE PRINCIPLES */}
+        <div className="mb-32">
+          <div className="flex items-center justify-between mb-16">
+            <h2 className="text-sm font-mono text-gray-500 uppercase tracking-widest">Protocol Principles</h2>
+            <div className="h-px flex-1 bg-white/10 ml-8" />
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 mb-20">
-            {stats.map((stat) => (
-              <div key={stat.label} className="text-center p-6 rounded-2xl bg-gray-100 dark:bg-gray-900">
-                <p className="text-3xl font-bold text-emerald-500 mb-2">{stat.value}</p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">{stat.label}</p>
+          <div className="grid md:grid-cols-3 gap-12">
+            {principles.map((principle, i) => (
+              <div key={i} className="group space-y-6">
+                <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10 group-hover:bg-white transition-all group-hover:rotate-6">
+                  <principle.icon size={20} className="text-gray-400 group-hover:text-black transition-colors" />
+                </div>
+                <h3 className="text-xl font-bold tracking-tight">{principle.title}</h3>
+                <p className="text-sm text-gray-500 leading-relaxed font-medium">
+                  {principle.description}
+                </p>
               </div>
             ))}
           </div>
+        </div>
 
-          <div className="mb-20">
-            <h2 className="text-2xl font-bold mb-8 text-center">The Problem</h2>
-            <div className="prose dark:prose-invert max-w-none">
-              <p className="text-gray-600 dark:text-gray-400 text-lg leading-relaxed">
-                The technology sector is responsible for approximately 2-4% of global greenhouse gas emissions —
-                roughly equivalent to the aviation industry. As software becomes increasingly central to our lives,
-                this footprint continues to grow.
-              </p>
-              <p className="text-gray-600 dark:text-gray-400 text-lg leading-relaxed mt-4">
-                Every line of code we write has an environmental cost. From the energy consumed by servers
-                running our applications to the resources needed for data processing, software development
-                has a tangible impact on our planet.
-              </p>
-            </div>
-          </div>
-
-          <div className="mb-20">
-            <h2 className="text-2xl font-bold mb-8 text-center">Our Approach</h2>
-            <div className="grid md:grid-cols-3 gap-6">
-              {principles.map((principle) => (
-                <div
-                  key={principle.title}
-                  className="p-6 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900"
-                >
-                  <div className="p-3 rounded-xl bg-emerald-500/10 w-fit mb-4">
-                    <principle.icon className="w-6 h-6 text-emerald-500" />
-                  </div>
-                  <h3 className="text-lg font-semibold mb-2">{principle.title}</h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">{principle.description}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="mb-20">
-            <h2 className="text-2xl font-bold mb-8 text-center">How CO2DE Works</h2>
-            <div className="space-y-6">
-              <div className="p-6 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
-                <h3 className="font-semibold mb-2">1. Code Analysis</h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  We analyze your code for patterns that affect energy consumption: loops, async operations,
-                  DOM manipulation, complexity metrics, and more.
-                </p>
-              </div>
-              <div className="p-6 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
-                <h3 className="font-semibold mb-2">2. Energy Estimation</h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Using heuristics based on file size, code complexity, and identified patterns, we estimate
-                  the relative energy consumption and CO₂ footprint.
-                </p>
-              </div>
-              <div className="p-6 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
-                <h3 className="font-semibold mb-2">3. AI-Powered Recommendations</h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Our AI analyzes your code and provides actionable recommendations to improve energy efficiency,
-                  with estimated improvements for each suggestion.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="text-center p-8 rounded-2xl bg-gradient-to-br from-emerald-500/10 to-teal-500/10 border border-emerald-500/20">
-            <h2 className="text-2xl font-bold mb-4">Join the Movement</h2>
-            <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-xl mx-auto">
-              Every developer can make a difference. Start analyzing your code today and
-              contribute to a more sustainable digital ecosystem.
+        {/* CALL TO ACTION */}
+        <div className="p-12 md:p-24 rounded-[3rem] bg-white text-black relative overflow-hidden group">
+          <div className="relative z-10 flex flex-col items-center text-center">
+            <h2 className="text-4xl md:text-6xl font-black tracking-tighter uppercase leading-none mb-8">
+              Join the <br /> Optimization <br /> Force.
+            </h2>
+            <p className="text-lg font-medium max-w-md mb-12 opacity-70">
+              Start measuring your impact. Every millisecond of compute saved counts toward a sustainable future.
             </p>
-            <div className="flex items-center justify-center gap-4">
-              <a
-                href="/analyze"
-                className="px-6 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-medium transition-colors"
-              >
-                Start Analyzing
-              </a>
-              <a
-                href="https://github.com/Govinda2809/Co2de"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-6 py-3 rounded-xl border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 font-medium transition-colors"
-              >
-                View on GitHub
-              </a>
-            </div>
+            <Link 
+              href="/analyze"
+              className="group/btn flex items-center gap-4 bg-black text-white px-10 py-5 rounded-full font-bold transition-all hover:pr-12 active:scale-95"
+            >
+              INITIALIZE_AUDIT
+              <ArrowRight size={20} className="group-hover/btn:translate-x-2 transition-transform" />
+            </Link>
+          </div>
+
+          {/* BACKGROUND DECORATION */}
+          <div className="absolute top-0 right-0 p-24 opacity-5 group-hover:opacity-10 transition-opacity pointer-events-none">
+            <Globe size={400} />
           </div>
         </div>
+
       </div>
     </div>
   );

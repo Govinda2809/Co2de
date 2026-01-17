@@ -5,7 +5,7 @@ import { FileUpload } from "@/components/upload";
 import { MetricsDisplay, EnergyScoreChart, AIReviewCard } from "@/components/dashboard";
 import { calculateEnergyMetrics, getMockedReview } from "@/lib/energy";
 import { AnalysisItemSchema, AIReview } from "@/lib/schemas";
-import { Sparkles, RotateCcw, Loader2, Zap } from "lucide-react";
+import { Sparkles, RotateCcw, Loader2, Zap, TrendingUp } from "lucide-react";
 import { storage, databases, DATABASE_ID, COLLECTION_ID, BUCKET_ID, ID } from "@/lib/appwrite";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -108,19 +108,19 @@ export default function AnalyzePage() {
   }, []);
 
   return (
-    <div className="py-12">
+    <div className="py-24 bg-[#0a0a0a] min-h-screen">
       <div className="container mx-auto px-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-10">
-            <h1 className="text-3xl sm:text-4xl font-bold mb-4 font-heading">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-16 px-4">
+            <h1 className="text-4xl sm:text-6xl font-black mb-6 tracking-tighter text-white uppercase">
               Analyze Your Code
             </h1>
-            <p className="text-gray-600 dark:text-gray-400">
-              Upload a code file to get instant insights about its environmental impact
+            <p className="text-gray-500 max-w-xl mx-auto uppercase tracking-widest text-xs font-mono">
+              Identify the environmental footprint of your software architecture instantly
             </p>
           </div>
 
-          <div className="space-y-8">
+          <div className="space-y-12">
             <FileUpload
               onFileAccepted={handleFileAccepted}
               isLoading={state.isAnalyzing}
@@ -129,55 +129,59 @@ export default function AnalyzePage() {
             />
 
             {error && (
-              <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 text-sm text-center">
+              <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-500 text-sm text-center font-mono">
                 {error}
               </div>
             )}
 
             {state.metrics && state.review && !state.isAnalyzing && (
-              <div className="space-y-8 animate-fade-in">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-xl font-semibold flex items-center gap-2">
-                    <Sparkles className="w-5 h-5 text-emerald-500" />
-                    Analysis Results
+              <div className="space-y-12 animate-fade-in px-2">
+                <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                  <h2 className="text-2xl font-bold flex items-center gap-3 text-white tracking-tight">
+                    <Sparkles className="w-6 h-6 text-emerald-500" />
+                    ANALYSIS_RESULT
                   </h2>
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-xs font-medium text-amber-700">
-                      <Zap className="w-3.5 h-3.5" />
-                      Carbon Intensity: {state.metrics.gridIntensity} gCO2/kWh
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-xs font-mono text-gray-400">
+                      <Zap className="w-3.5 h-3.5 text-amber-500" />
+                      INTENSITY: {state.metrics.gridIntensity} gCO2/kWh
                     </div>
                     <button
                       onClick={handleClear}
-                      className="flex items-center gap-2 px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                      className="flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-full border border-white/10 text-gray-400 hover:text-white hover:bg-white/5 transition-all uppercase tracking-widest"
                     >
                       <RotateCcw className="w-4 h-4" />
-                      New Analysis
+                      Reset
                     </button>
                   </div>
                 </div>
 
                 <MetricsDisplay metrics={state.metrics} />
 
-                <div className="grid lg:grid-cols-2 gap-8">
-                  <div className="p-6 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm">
-                    <h3 className="text-lg font-semibold mb-4 text-center">Energy Efficiency Score</h3>
+                <div className="grid lg:grid-cols-2 gap-12">
+                  <div className="p-8 rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-2xl relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
+                      <TrendingUp className="w-32 h-32 text-white" />
+                    </div>
+                    <h3 className="text-sm font-bold mb-8 text-center text-gray-500 uppercase tracking-widest font-mono">Energy Efficiency Score</h3>
                     <EnergyScoreChart score={state.review.score} />
-                    <p className="text-center text-sm text-gray-500 mt-4">
-                      Based on code patterns, complexity, and best practices
+                    <p className="text-center text-xs text-gray-500 mt-8 font-mono leading-relaxed max-w-xs mx-auto">
+                      Calculated using pattern recognition and computational density factors.
                     </p>
                   </div>
 
-                  <div className="p-6 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm">
+                  <div className="p-8 rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-2xl">
                     <AIReviewCard review={state.review} />
                   </div>
                 </div>
 
-                <div className="p-6 rounded-2xl bg-emerald-500/5 border border-emerald-500/20">
-                  <h3 className="font-semibold mb-2 text-emerald-700 dark:text-emerald-400 font-heading">
-                    💡 Carbon-Aware Tip
+                <div className="p-8 rounded-3xl bg-white/5 border border-white/10 relative overflow-hidden">
+                  <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500" />
+                  <h3 className="font-bold mb-3 text-white uppercase tracking-tighter flex items-center gap-2">
+                    💡 Carbon-Aware Insight
                   </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Your current grid intensity is <span className="font-bold">{state.metrics.gridIntensity} gCO2/kWh</span>. 
+                  <p className="text-sm text-gray-400 leading-relaxed font-medium">
+                    Your current grid intensity is <span className="text-emerald-500 font-bold">{state.metrics.gridIntensity} gCO2/kWh</span>. 
                     Running intensive operations when this value is lower (e.g., during high renewable output) significantly reduces your carbon footprint.
                   </p>
                 </div>
@@ -185,9 +189,9 @@ export default function AnalyzePage() {
             )}
 
             {state.isAnalyzing && (
-              <div className="flex flex-col items-center justify-center py-20 space-y-4">
-                <Loader2 className="w-12 h-12 text-emerald-500 animate-spin" />
-                <p className="text-gray-500 font-medium font-heading">Processing code patterns...</p>
+              <div className="flex flex-col items-center justify-center py-24 space-y-6">
+                <Loader2 className="w-16 h-16 text-white animate-spin opacity-20" />
+                <p className="text-gray-500 font-mono text-xs uppercase tracking-[0.3em] animate-pulse">Computing environmental footprint...</p>
               </div>
             )}
           </div>
@@ -196,3 +200,4 @@ export default function AnalyzePage() {
     </div>
   );
 }
+

@@ -51,8 +51,8 @@ export function EnergyScoreChart({ score, className }: EnergyScoreChartProps) {
         </RadialBarChart>
       </ResponsiveContainer>
       <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-        <span className="text-4xl font-bold">{score}</span>
-        <span className="text-sm text-gray-500">{getLabel()}</span>
+        <span className="text-5xl font-black text-white">{score}</span>
+        <span className="text-xs font-mono uppercase tracking-widest text-gray-400 mt-1">{getLabel()}</span>
       </div>
     </div>
   );

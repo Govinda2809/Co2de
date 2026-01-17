@@ -7,7 +7,7 @@ import { useGSAP } from "@gsap/react";
 import { ArrowDown } from "lucide-react";
 
 if (typeof window !== "undefined") {
-  gsap.registerPlugin(ScrollTrigger, useGSAP);
+  gsap.registerPlugin(ScrollTrigger);
 }
 
 export default function Home() {
