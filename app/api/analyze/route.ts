@@ -4,10 +4,24 @@ import { NextResponse } from 'next/server';
 import { AIReviewSchema } from '@/lib/schemas';
 
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
-const MULEROUTER_API_KEY = process.env.MULEROUTER_API_KEY;
 
-async function callAI(code: string, systemPrompt: string, apiKey: string, url: string, model: string) {
-  const response = await fetch(url, {
+/**
+ * LARGE_CONTEXT_FREE_MODELS
+ * Curated list of high-context, high-performance free models on OpenRouter.
+ * 1. DeepSeek R1 (Distill Llama 70B) - Excellent reasoning for architecture.
+ * 2. Gemini 2.0 Flash Lite - Ultra-fast, high-token capacity.
+ * 3. Phi 3 Medium - Efficient, high-quality small model results.
+ */
+const FREE_MODELS = [
+  "deepseek/deepseek-r1-distill-llama-70b:free",
+  "google/gemini-2.0-flash-lite-preview-02-05:free",
+  "microsoft/phi-3-medium-128k-instruct:free",
+  "meta-llama/llama-3.3-70b-instruct:free",
+  "google/gemini-2.0-flash-exp:free"
+];
+
+async function callAI(code: string, systemPrompt: string, apiKey: string, model: string) {
+  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
     headers: {
       "Authorization": `Bearer ${apiKey}`,
@@ -61,25 +75,41 @@ export async function POST(request: Request) {
     } else {
       const context = metrics ? `\n\nMetric Context: Big_O=${metrics.complexity}, Mem_Pressure=${metrics.memPressure}, Lines=${metrics.lineCount}, Language=${metrics.language}` : "";
       systemPrompt = `You are a Sustainability Auditor. Analyze the code for environmental footprint. ${context}
-      Return a JSON object: { "score": number (1-10), "bottleneck": "string", "optimization": "string", "improvement": "string" }.
+      Identify any heavy or inefficient code dependencies and suggest lighter alternatives.
+      Return a JSON object: { 
+        "score": number (1-10), 
+        "bottleneck": "string", 
+        "optimization": "string", 
+        "improvement": "string",
+        "dependencies": [
+          { "name": "string", "impact": "description", "alternative": "suggestion" }
+        ]
+      }.
+      If no significant dependencies are found, return an empty array for dependencies.
       Ensure the score reflects the complexity metrics provided.`;
+    }
+
+    if (!OPENROUTER_API_KEY) {
+      throw new Error("OPENROUTER_API_KEY is not configured in environment.");
     }
 
     let content;
     const errors: string[] = [];
 
-    try {
-      if (!OPENROUTER_API_KEY) throw new Error("OPENROUTER_API_KEY absent.");
-      content = await callAI(code, systemPrompt, OPENROUTER_API_KEY, "https://openrouter.ai/api/v1/chat/completions", "google/gemini-2.0-flash-exp:free");
-    } catch (e: any) {
-      errors.push(`OpenRouter: ${e.message}`);
+    // Fallback Loop Through Large Context Free Models
+    for (const model of FREE_MODELS) {
       try {
-        if (!MULEROUTER_API_KEY) throw new Error("MULEROUTER_API_KEY absent.");
-        content = await callAI(code, systemPrompt, MULEROUTER_API_KEY, "https://mulerouter.com/api/v1/chat/completions", "meta-llama/llama-3-8b-instruct");
-      } catch (e2: any) {
-        errors.push(`MuleRouter: ${e2.message}`);
-        throw new Error(`Dual-Router Core Failure: ${errors.join(" | ")}`);
+        content = await callAI(code, systemPrompt, OPENROUTER_API_KEY, model);
+        if (content) break; // Success!
+      } catch (e: any) {
+        errors.push(`${model}: ${e.message}`);
+        console.warn(`Model ${model} failed, trying next...`);
+        continue;
       }
+    }
+
+    if (!content) {
+      throw new Error(`All Large-Context Free Models Exhausted: ${errors.join(" | ")}`);
     }
 
     if (mode === 'refactor') {

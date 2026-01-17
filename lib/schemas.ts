@@ -12,6 +12,11 @@ export const AIReviewSchema = z.object({
   bottleneck: z.string(),
   optimization: z.string(),
   improvement: z.string(),
+  dependencies: z.array(z.object({
+    name: z.string(),
+    impact: z.string(),
+    alternative: z.string()
+  })).optional(),
 });
 
 /**
@@ -53,6 +58,11 @@ export const AnalysisItemSchema = z.object({
   bottleneck: z.string(),
   optimization: z.string(),
   improvement: z.string(),
+  dependencies: z.array(z.object({
+    name: z.string(),
+    impact: z.string(),
+    alternative: z.string()
+  })).optional(),
   
   // Delta Context (Optional)
   optimizationDelta: z.number().optional(), // Percentage vs Original

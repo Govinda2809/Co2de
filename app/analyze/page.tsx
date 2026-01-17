@@ -126,6 +126,7 @@ export default function AnalyzePage() {
         bottleneck: state.review?.bottleneck || "Heuristic scale limit detected.",
         optimization: state.review?.optimization || "Reduce algorithmic depth.",
         improvement: state.review?.improvement || "Optimized compute possible.",
+        dependencies: state.review?.dependencies || [],
         createdAt: new Date().toISOString(),
         userId: user.$id,
         complexity: state.metrics.complexity,
@@ -283,8 +284,34 @@ export default function AnalyzePage() {
                   )}
 
                   {state.refactored && (
-                    <div className="p-12 rounded-[4rem] border border-emerald-500/30 bg-emerald-500/[0.02] space-y-10 animate-in zoom-in-95 backdrop-blur-3xl">
-                      <div className="flex items-center justify-between border-b border-emerald-500/10 pb-8"><div className="flex items-center gap-4 text-emerald-500"><CheckCircle2 size={24} /><span className="text-xl font-black uppercase tracking-widest italic outline-none">Optimized_Result</span></div><button onClick={()=>setState(p=>({...p, refactored: null}))} className="text-[10px] font-mono text-emerald-500/40 uppercase hover:text-white transition-colors font-bold">Dismiss_View</button></div>
+                    <div className="p-12 rounded-[4rem] border border-emerald-500/30 bg-emerald-500/[0.02] space-y-10 animate-in zoom-in-95 backdrop-blur-3xl relative overflow-hidden">
+                      <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 blur-[100px] pointer-events-none" />
+                      
+                      <div className="flex items-center justify-between border-b border-emerald-500/10 pb-8">
+                        <div className="flex items-center gap-4 text-emerald-500">
+                          <CheckCircle2 size={24} />
+                          <span className="text-xl font-black uppercase tracking-widest italic outline-none">Optimized_Result</span>
+                        </div>
+                        <button onClick={()=>setState(p=>({...p, refactored: null}))} className="text-[10px] font-mono text-emerald-500/40 uppercase hover:text-white transition-colors font-bold">Dismiss_View</button>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="p-6 rounded-[2rem] bg-white/[0.02] border border-white/5 space-y-2">
+                          <p className="text-[9px] font-mono text-gray-600 uppercase tracking-widest">Efficiency_Boost</p>
+                          <div className="flex items-end gap-2">
+                             <p className="text-3xl font-black text-emerald-500 italic">+{Math.max(0, ((state.review?.score || 0) - (state.refactored.metrics?.score || 0)) * -10).toFixed(0)}%</p>
+                             <TrendingUp size={16} className="text-emerald-500 mb-2" />
+                          </div>
+                        </div>
+                        <div className="p-6 rounded-[2rem] bg-white/[0.02] border border-white/5 space-y-2">
+                          <p className="text-[9px] font-mono text-gray-600 uppercase tracking-widest">Energy_Delta</p>
+                          <div className="flex items-end gap-2">
+                             <p className="text-3xl font-black text-amber-500 italic">{(state.metrics.estimatedEnergy - state.refactored.metrics.estimatedEnergy).toFixed(3)}</p>
+                             <Zap size={16} className="text-amber-500 mb-2" />
+                          </div>
+                        </div>
+                      </div>
+
                       <div className="bg-black/80 rounded-[2.5rem] p-10 border border-white/5 max-h-[400px] overflow-hidden flex flex-col">
                          <div className="flex items-center justify-between mb-4 px-2">
                             <span className="text-[9px] font-mono text-gray-600 uppercase tracking-widest">Calculated_Green_Architecture</span>

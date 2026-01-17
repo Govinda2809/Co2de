@@ -83,6 +83,37 @@ export function AIReviewCard({ review, className }: AIReviewCardProps) {
             </div>
           </div>
         ))}
+
+        {review.dependencies && review.dependencies.length > 0 && (
+          <div className="mt-8 space-y-6">
+            <div className="flex items-center gap-4 px-2">
+              <div className="h-px flex-1 bg-white/5" />
+              <p className="text-[10px] font-mono text-gray-500 uppercase tracking-[0.5em] font-black">Dependency_Audit</p>
+              <div className="h-px flex-1 bg-white/5" />
+            </div>
+            
+            <div className="grid gap-4">
+               {review.dependencies.map((dep, idx) => (
+                 <div key={idx} className="p-8 rounded-[2.5rem] bg-emerald-500/[0.02] border border-emerald-500/10 flex flex-col md:flex-row md:items-center justify-between gap-6 group hover:bg-emerald-500/[0.04] transition-all">
+                    <div className="space-y-1">
+                       <div className="flex items-center gap-3">
+                          <span className="text-sm font-black text-white uppercase italic">{dep.name}</span>
+                          <span className="text-[9px] font-mono text-emerald-500/40 uppercase tracking-widest font-bold px-2 py-0.5 rounded-full border border-emerald-500/10">Inefficient</span>
+                       </div>
+                       <p className="text-[11px] text-gray-500 font-medium lowercase first-letter:uppercase">{dep.impact}</p>
+                    </div>
+                    <div className="flex items-center gap-4 bg-black/40 p-4 rounded-2xl border border-white/5">
+                       <TrendingUp size={14} className="text-emerald-500" />
+                       <div className="space-y-0.5">
+                          <p className="text-[8px] font-mono text-gray-600 uppercase tracking-widest">Recommended_Swap</p>
+                          <p className="text-[11px] font-black text-emerald-500 uppercase italic tracking-tighter">{dep.alternative}</p>
+                       </div>
+                    </div>
+                 </div>
+               ))}
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center justify-center gap-4">
