@@ -221,6 +221,7 @@ export function Header() {
             href="https://github.com/Govinda2809/Co2de"
             target="_blank"
             rel="noopener noreferrer"
+            aria-label="View on GitHub"
             className="hidden sm:flex p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
           >
             <Github className="w-5 h-5 text-gray-700 dark:text-gray-300" />
@@ -281,6 +282,7 @@ export function Header() {
 
           <button
             onClick={() => setShowMobileMenu(!showMobileMenu)}
+            aria-label="Toggle mobile menu"
             className="md:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200"
           >
             {showMobileMenu ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}

@@ -4,7 +4,7 @@ import { useState, useCallback } from "react";
 import { FileUpload } from "@/components/upload";
 import { MetricsDisplay, EnergyScoreChart, AIReviewCard } from "@/components/dashboard";
 import { calculateEnergyMetrics, getMockedReview } from "@/lib/energy";
-import { AnalysisItemSchema } from "@/lib/schemas";
+import { AnalysisItemSchema, AIReview } from "@/lib/schemas";
 import { Sparkles, RotateCcw, Loader2, Zap } from "lucide-react";
 import { storage, databases, DATABASE_ID, COLLECTION_ID, BUCKET_ID, ID } from "@/lib/appwrite";
 import { useAuth } from "@/hooks/use-auth";
@@ -12,8 +12,17 @@ import { useAuth } from "@/hooks/use-auth";
 interface AnalysisState {
   file: File | null;
   content: string;
-  metrics: any | null;
-  review: any | null;
+  metrics: {
+    estimatedEnergy: number;
+    estimatedCO2: number;
+    energyUnit: string;
+    co2Unit: string;
+    gridIntensity: number;
+    lineCount: number;
+    language?: string;
+    complexity: number;
+  } | null;
+  review: AIReview | null;
   isAnalyzing: boolean;
 }
 
@@ -34,14 +43,23 @@ export default function AnalyzePage() {
 
     try {
       // 1. Calculate Metrics (Carbon-Aware)
-      const metrics = await calculateEnergyMetrics(file.size, content);
-      const review = getMockedReview(content);
+      const metrics = await calculateEnergyMetrics(file.size, file.name, content);
+      
+      // Attempt real AI analysis, fallback to mocked if API or Key is missing
+      let review;
+      try {
+        const { getAIReview } = await import("@/lib/energy");
+        review = await getAIReview(content);
+      } catch (e) {
+        console.warn("AI Analysis failed, using heuristic fallback", e);
+        review = getMockedReview(content);
+      }
 
       // 2. Data Validation with Zod (Enforcement)
       const rawData = {
         fileName: file.name,
         fileSize: file.size,
-        fileId: "placeholder", // will update after upload
+        fileId: "placeholder", 
         estimatedEnergy: metrics.estimatedEnergy,
         estimatedCO2: metrics.estimatedCO2,
         score: review.score,
@@ -57,17 +75,11 @@ export default function AnalyzePage() {
       // 3. Upload to Appwrite
       if (DATABASE_ID && COLLECTION_ID && BUCKET_ID) {
         try {
-          // Upload file to storage
           const uploadedFile = await storage.createFile(BUCKET_ID, ID.unique(), file);
-          
-          // Update validated data with real fileId
           validatedData.fileId = uploadedFile.$id;
-          
-          // Save result to database
           await databases.createDocument(DATABASE_ID, COLLECTION_ID, ID.unique(), validatedData);
         } catch (dbError) {
           console.error("Appwrite save failed:", dbError);
-          // Still show results locally even if save fails
         }
       }
 
@@ -175,7 +187,7 @@ export default function AnalyzePage() {
             {state.isAnalyzing && (
               <div className="flex flex-col items-center justify-center py-20 space-y-4">
                 <Loader2 className="w-12 h-12 text-emerald-500 animate-spin" />
-                <p className="text-gray-500 font-medium">Processing code patterns...</p>
+                <p className="text-gray-500 font-medium font-heading">Processing code patterns...</p>
               </div>
             )}
           </div>

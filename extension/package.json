@@ -1,0 +1,58 @@
+{
+  "name": "co2de-vscode",
+  "displayName": "CO2DE: Carbon-Aware Analysis",
+  "description": "Real-time carbon footprint analysis for your code.",
+  "version": "0.1.0",
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "co2de.analyze",
+        "title": "CO2DE: Analyze Current File"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "co2de-explorer",
+          "title": "CO2DE",
+          "icon": "resources/leaf.svg"
+        }
+      ]
+    },
+    "views": {
+      "co2de-explorer": [
+        {
+          "type": "webview",
+          "id": "co2de.view",
+          "name": "Carbon Impact"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.75.0",
+    "@types/node": "16.x",
+    "typescript": "^4.9.4",
+    "eslint": "^8.33.0",
+    "@typescript-eslint/eslint-plugin": "^5.51.0",
+    "@typescript-eslint/parser": "^5.51.0"
+  }
+}

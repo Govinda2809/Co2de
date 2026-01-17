@@ -2,8 +2,12 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
-  // Get session cookie from Appwrite (it usually starts with 'a_session_')
-  const sessionToken = request.cookies.getAll().find(c => c.name.startsWith('a_session_'));
+  // Try to find any Appwrite session cookie
+  // Appwrite cookies usually look like: a_session_[PROJECT_ID] or a_session_[NAME]
+  const allCookies = request.cookies.getAll();
+  const hasAppwriteSession = allCookies.some(cookie => 
+    cookie.name.startsWith('a_session_') || cookie.name === 'a_session'
+  );
   
   const { pathname } = request.nextUrl;
 
@@ -14,14 +18,14 @@ export function middleware(request: NextRequest) {
   const isAuthRoute = pathname.startsWith('/login') || pathname.startsWith('/signup');
 
   // 1. If trying to access protected route without session -> redirect to login
-  if (isProtectedRoute && !sessionToken) {
+  if (isProtectedRoute && !hasAppwriteSession) {
     const url = new URL('/login', request.url);
     url.searchParams.set('callbackUrl', pathname);
     return NextResponse.redirect(url);
   }
 
   // 2. If trying to access auth routes while logged in -> redirect to dashboard
-  if (isAuthRoute && sessionToken) {
+  if (isAuthRoute && hasAppwriteSession) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
