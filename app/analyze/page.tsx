@@ -218,20 +218,18 @@ export default function AnalyzePage() {
 
         {state.metrics && (
           <div className="space-y-20 animate-in fade-in slide-in-from-bottom-10 duration-1000">
-            <div className="flex flex-col lg:flex-row items-center justify-between gap-12 py-16 border-y border-white/5 bg-gradient-to-r from-transparent via-emerald-500/[0.01] to-transparent">
-              <div className="space-y-4 text-center lg:text-left">
-                <div className="flex items-center justify-center lg:justify-start gap-4 mb-2">
-                   <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
-                      <Rocket size={16} className="text-emerald-500" />
-                   </div>
-                   <h2 className="text-4xl font-black text-white tracking-tighter uppercase italic">Synthesis_Audit_Live</h2>
-                </div>
-                <div className="flex flex-wrap items-center justify-center lg:justify-start gap-6">
-                   <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[9px] font-mono text-emerald-500 uppercase tracking-widest font-black">
-                      <ShieldCheck size={12} className="animate-pulse" /> Protocol_Safe
-                   </div>
-                   <p className="text-[11px] font-mono text-gray-600 uppercase tracking-widest italic font-bold">{state.metrics.gridIntensity} gCO2e Grid_Load</p>
-                </div>
+            <div className="flex flex-col lg:flex-row items-center justify-between gap-12 py-16 border-y border-white/5">
+              <div className="flex items-center gap-4">
+                 <button 
+                   onClick={() => setExpertMode(!expertMode)}
+                   className={cn(
+                     "flex items-center gap-3 px-6 py-3 rounded-full border transition-all text-[10px] font-mono uppercase tracking-widest font-black",
+                     expertMode ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500" : "bg-white/[0.02] border-white/10 text-gray-500 hover:text-white"
+                   )}
+                 >
+                   {expertMode ? <Eye size={14} /> : <EyeOff size={14} />}
+                   Expert_Telemetry_{expertMode ? "ON" : "OFF"}
+                 </button>
               </div>
               <div className="flex flex-wrap items-center justify-center gap-4">
                 <button onClick={() => setState(p => ({ ...p, metrics: null, review: null, files: [], contents: [] }))} className="p-4 rounded-full border border-white/10 hover:bg-white/5 transition-all text-gray-600 hover:text-white"><RotateCcw size={20} /></button>
@@ -249,28 +247,43 @@ export default function AnalyzePage() {
 
             <MetricsDisplay metrics={state.metrics} />
 
-            <div className="grid lg:grid-cols-2 gap-16">
-              <div className="space-y-16">
-                 <div className="p-16 rounded-[4rem] border border-white/10 bg-white/[0.01] backdrop-blur-3xl relative overflow-hidden flex flex-col justify-center min-h-[500px] group">
-                   <div className="absolute top-0 right-0 p-16 opacity-[0.02] pointer-events-none group-hover:rotate-12 transition-transform duration-1000">
-                      <BarChart3 size={200} className="text-white" />
-                   </div>
-                   <h3 className="text-[11px] font-mono font-black mb-16 text-gray-500 uppercase tracking-[0.5em] text-center lg:text-left">Operational_Efficiency_Index</h3>
-                   <EnergyScoreChart score={state.review?.score || Math.max(1, 10 - Math.floor(state.metrics.complexity * 1.5))} />
-                 </div>
-
-                 <GridTimeline region={state.region} />
-              </div>
-
-              <div className="space-y-10">
-                {state.isAnalyzing && (
-                  <div className="p-16 rounded-[4rem] border border-white/10 bg-white/[0.01] flex flex-col items-center justify-center space-y-8 animate-pulse">
-                     <BrainCircuit size={48} className="text-emerald-500 animate-bounce" />
-                     <p className="text-[10px] font-mono text-gray-500 uppercase tracking-[0.4em]">Synthesizing_AI_Review...</p>
+            <div className="grid lg:grid-cols-3 gap-10">
+               <div className="lg:col-span-2 space-y-10">
+                  <RegionalHeatmap selectedRegion={state.region} />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                     <HardwareThermalIndex selectedHardware={state.hardware} complexity={state.metrics.complexity} />
+                     <div className="p-10 rounded-[3.5rem] border border-white/10 bg-white/[0.01] flex flex-col justify-center min-h-[350px]">
+                        <h3 className="text-[11px] font-mono font-black mb-8 text-gray-500 uppercase tracking-[0.5em]">Efficiency_Index</h3>
+                        <EnergyScoreChart score={state.review?.score || Math.max(1, 10 - Math.floor(state.metrics.complexity * 1.5))} />
+                     </div>
                   </div>
-                )}
-                
-                {state.review && <AIReviewCard review={state.review} />}
+                  <GridTimeline region={state.region} />
+               </div>
+
+               <div className="space-y-10">
+                  {state.isAnalyzing && (
+                    <div className="p-16 rounded-[4rem] border border-white/10 bg-white/[0.01] flex flex-col items-center justify-center space-y-8 animate-pulse">
+                       <BrainCircuit size={48} className="text-emerald-500 animate-bounce" />
+                       <p className="text-[10px] font-mono text-gray-500 uppercase tracking-[0.4em]">Synthesizing_AI_Review...</p>
+                    </div>
+                  )}
+                  
+                  {state.review && <AIReviewCard review={state.review} />}
+
+                  {expertMode && (
+                    <div className="p-10 rounded-[3rem] border border-emerald-500/20 bg-emerald-500/[0.02] space-y-6 animate-in slide-in-from-right-10">
+                       <div className="flex items-center gap-3">
+                          <Terminal size={14} className="text-emerald-500" />
+                          <p className="text-[10px] font-mono text-emerald-500 uppercase tracking-[0.3em] font-black">Raw_AST_Telemetry</p>
+                       </div>
+                       <div className="space-y-4 font-mono text-[11px] text-emerald-500/70">
+                          <div className="flex justify-between border-b border-white/5 pb-2"><span>Structural_Complexity:</span> <span>{state.metrics.complexity}</span></div>
+                          <div className="flex justify-between border-b border-white/5 pb-2"><span>Memory_Pressure:</span> <span>{state.metrics.memPressure}</span></div>
+                          <div className="flex justify-between border-b border-white/5 pb-2"><span>Recursion_Status:</span> <span>{state.metrics.recursionDetected ? "ACTIVE" : "NONE"}</span></div>
+                          <div className="flex justify-between border-b border-white/5 pb-2"><span>Total_Artifact_Lines:</span> <span>{state.metrics.lineCount}</span></div>
+                       </div>
+                    </div>
+                  )}
                 
                 {state.metrics && !state.refactored && (
                     <button onClick={handleRefactor} disabled={state.isRefactoring} className="w-full p-12 rounded-[4rem] border border-emerald-500/20 bg-emerald-500/[0.03] hover:bg-emerald-500/[0.06] transition-all group flex items-center justify-between text-left relative overflow-hidden shadow-2xl">
