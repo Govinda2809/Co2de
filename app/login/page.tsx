@@ -21,7 +21,7 @@ export default function LoginPage() {
 
     try {
       await login(email, password);
-      router.push("/dashboard");
+      // Auth provider handles redirect
     } catch (err: any) {
       setError(err.message || "Failed to sign in. Please check your credentials.");
       setIsLoading(false);

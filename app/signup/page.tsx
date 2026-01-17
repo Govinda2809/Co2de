@@ -30,7 +30,7 @@ export default function SignupPage() {
     setIsLoading(true);
     try {
       await signup(formData.email, formData.password, formData.name);
-      router.push("/dashboard");
+      // Auth provider handles redirect
     } catch (err: any) {
       setError(err.message || "Failed to create account. Please try again.");
       setIsLoading(false);

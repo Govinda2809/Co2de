@@ -39,10 +39,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, pass: string) => {
     setIsLoading(true);
     try {
+      // Clear legacy sessions to prevent 401/409 conflicts
+      try {
+        await account.deleteSession("current");
+      } catch (e) {}
+      
       await account.createEmailPasswordSession(email, pass);
-      const user = await account.get();
-      setUser(user);
-      router.refresh(); // Sync middleware
+      const currentUser = await account.get();
+      setUser(currentUser);
+      
+      // Force a full navigation to ensure Middleware and Server Components sync correctly
+      window.location.href = "/dashboard";
+    } catch (error) {
+      console.error("Login failed:", error);
+      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -53,9 +63,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await account.create("unique()", email, pass, name);
       await account.createEmailPasswordSession(email, pass);
-      const user = await account.get();
-      setUser(user);
-      router.refresh(); // Sync middleware
+      const currentUser = await account.get();
+      setUser(currentUser);
+      
+      window.location.href = "/dashboard";
+    } catch (error) {
+      console.error("Signup failed:", error);
+      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -66,8 +80,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await account.deleteSession("current");
       setUser(null);
-      router.refresh();
-      router.push("/");
+      // Nuclear reload to home
+      window.location.href = "/";
+    } catch (error) {
+      console.error("Logout error:", error);
+      setUser(null);
+      window.location.href = "/login";
     } finally {
       setIsLoading(false);
     }
