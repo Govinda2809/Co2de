@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react";
 import { FileUpload } from "@/components/upload";
 import { MetricsDisplay, EnergyScoreChart, AIReviewCard } from "@/components/dashboard";
-import { calculateEnergyMetrics, getMockedReview } from "@/lib/energy";
+import { calculateEnergyMetrics } from "@/lib/energy";
 import { AnalysisItemSchema, AIReview } from "@/lib/schemas";
 import { Sparkles, RotateCcw, Loader2, Zap, TrendingUp } from "lucide-react";
 import { storage, databases, DATABASE_ID, COLLECTION_ID, BUCKET_ID, ID } from "@/lib/appwrite";
@@ -44,22 +44,26 @@ export default function AnalyzePage() {
     try {
       // 1. Calculate Metrics (Carbon-Aware)
       const metrics = await calculateEnergyMetrics(file.size, file.name, content);
-      
+
       // Attempt real AI analysis, fallback to mocked if API or Key is missing
+      // Attempt real AI analysis
       let review;
       try {
         const { getAIReview } = await import("@/lib/energy");
         review = await getAIReview(content);
       } catch (e) {
-        console.warn("AI Analysis failed, using heuristic fallback", e);
-        review = getMockedReview(content);
+        console.warn("AI Analysis failed", e);
+        // If AI fails, we can't provide a review without dummy data.
+        // We'll throw to let the error handler catch it, OR provide a "N/A" review.
+        // Given "remove all dummy data", failing or N/A is appropriate.
+        throw new Error("AI Analysis unavailable and dummy data is disabled.");
       }
 
       // 2. Data Validation with Zod (Enforcement)
       const rawData = {
         fileName: file.name,
         fileSize: file.size,
-        fileId: "placeholder", 
+        fileId: "placeholder",
         estimatedEnergy: metrics.estimatedEnergy,
         estimatedCO2: metrics.estimatedCO2,
         score: review.score,
@@ -181,7 +185,7 @@ export default function AnalyzePage() {
                     💡 Carbon-Aware Insight
                   </h3>
                   <p className="text-sm text-gray-400 leading-relaxed font-medium">
-                    Your current grid intensity is <span className="text-emerald-500 font-bold">{state.metrics.gridIntensity} gCO2/kWh</span>. 
+                    Your current grid intensity is <span className="text-emerald-500 font-bold">{state.metrics.gridIntensity} gCO2/kWh</span>.
                     Running intensive operations when this value is lower (e.g., during high renewable output) significantly reduces your carbon footprint.
                   </p>
                 </div>
