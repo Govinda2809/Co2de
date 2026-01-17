@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
-import { Upload, FileCode, X, Loader2, FolderOpen, Zap } from "lucide-react";
+import { Upload, FileCode, X, Loader2, FolderOpen, Zap, Plus, Layers } from "lucide-react";
 import { cn } from "@/lib/utils";
 import JSZip from "jszip";
 
@@ -81,39 +81,39 @@ export function FileUpload({ onFilesAccepted, isLoading, acceptedFiles = [], onC
 
   if (acceptedFiles.length > 0) {
     return (
-      <div className="relative rounded-[2.5rem] border-2 border-emerald-500/30 bg-emerald-500/[0.02] p-8 space-y-4 animate-in zoom-in-95 duration-500">
+      <div className="relative pixel-border bg-emerald-900/10 p-8 space-y-4 animate-in zoom-in-95 duration-200 border-2 border-emerald-500">
         <button
           onClick={onClear}
-          className="absolute top-6 right-6 p-2 rounded-full hover:bg-red-500/10 transition-colors group"
+          className="absolute top-4 right-4 p-2 bg-black border border-white hover:bg-red-500 hover:text-white transition-colors pixel-border"
           disabled={isLoading}
         >
-          <X className="w-5 h-5 text-gray-500 group-hover:text-red-500 transition-colors" />
+          <X className="w-4 h-4" />
         </button>
-        
+
         <div className="flex items-center gap-4 mb-6">
-          <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20">
-            <FolderOpen className="w-6 h-6 text-emerald-500" />
+          <div className="p-3 bg-emerald-500 text-black pixel-border">
+            <FolderOpen className="w-6 h-6" />
           </div>
           <div>
-            <p className="font-black text-xl tracking-tighter uppercase italic text-white">{acceptedFiles.length} Object{acceptedFiles.length > 1 ? 's' : ''}_Captured</p>
-            <p className="text-[10px] font-mono text-gray-500 uppercase tracking-widest">Total Payload: {(acceptedFiles.reduce((acc, f) => acc + f.size, 0) / 1024).toFixed(2)} KB</p>
+            <p className="font-pixel text-xl tracking-wide uppercase text-white">{acceptedFiles.length} FILE{acceptedFiles.length !== 1 && 'S'}_LOADED</p>
+            <p className="text-[10px] font-mono text-emerald-500 uppercase tracking-widest">Payload: {(acceptedFiles.reduce((acc, f) => acc + f.size, 0) / 1024).toFixed(2)} KB</p>
           </div>
         </div>
 
-        <div className="space-y-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+        <div className="space-y-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar border-2 border-white/10 p-2 bg-black/50">
           {acceptedFiles.map((file, i) => (
-            <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] border border-white/5 group hover:border-emerald-500/20 transition-all">
-              <FileCode size={14} className="text-gray-500 group-hover:text-emerald-500 transition-colors" />
-              <span className="text-[10px] font-mono text-gray-400 truncate flex-1">{file.name}</span>
-              <span className="text-[9px] font-mono text-gray-600">{(file.size / 1024).toFixed(1)}K</span>
+            <div key={i} className="flex items-center gap-3 p-2 border-b border-white/10 last:border-0 hover:bg-white/5 transition-all">
+              <FileCode size={14} className="text-emerald-500" />
+              <span className="text-[10px] font-mono text-gray-300 truncate flex-1 uppercase">{file.name}</span>
+              <span className="text-[9px] font-mono text-gray-500">{(file.size / 1024).toFixed(1)}K</span>
             </div>
           ))}
         </div>
 
         {(isLoading || isExtracting) && (
-          <div className="pt-4 flex items-center justify-center gap-3 text-emerald-500 font-black text-[10px] uppercase tracking-[0.4em] animate-pulse">
+          <div className="pt-4 flex items-center justify-center gap-3 text-emerald-500 font-pixel text-xs uppercase animate-pulse">
             <Loader2 className="w-4 h-4 animate-spin" />
-            {isExtracting ? "Extracting_Zip_Buffer..." : "Synchronizing_Data..."}
+            {isExtracting ? "UNPACKING_ARCHIVE..." : "SYNCING_DATA_STREAM..."}
           </div>
         )}
       </div>
@@ -124,53 +124,55 @@ export function FileUpload({ onFilesAccepted, isLoading, acceptedFiles = [], onC
     <div
       {...getRootProps()}
       className={cn(
-        "relative rounded-[3rem] border-2 border-dashed transition-all duration-700 cursor-pointer group overflow-hidden",
-        "bg-white/[0.01] hover:bg-emerald-500/[0.03]",
+        "relative pixel-border border-2 transition-all duration-200 cursor-pointer group overflow-hidden bg-black p-12",
         isDragActive || dragActive
-          ? "border-emerald-500 bg-emerald-500/5 scale-[0.98]"
-          : "border-white/10 hover:border-emerald-500/30",
+          ? "border-emerald-500 bg-emerald-500/10"
+          : "border-white hover:border-emerald-500",
         (isLoading || isExtracting) && "pointer-events-none opacity-50"
       )}
       onDragEnter={() => setDragActive(true)}
       onDragLeave={() => setDragActive(false)}
     >
       <input {...getInputProps()} />
-      <div className="flex flex-col items-center justify-center py-24 px-12 relative z-10">
+      <div className="flex flex-col items-center justify-center relative z-10 space-y-6">
         <div
           className={cn(
-            "w-20 h-20 rounded-[2rem] mb-8 flex items-center justify-center transition-all duration-700 shadow-3xl",
-            isDragActive ? "bg-emerald-500 rotate-90" : "bg-white/5 border border-white/10 group-hover:rotate-6 group-hover:bg-white/10"
+            "w-16 h-16 flex items-center justify-center transition-all duration-200 pixel-border border-2",
+            isDragActive ? "bg-emerald-500 border-white rotate-0" : "bg-black border-white group-hover:bg-white group-hover:text-black"
           )}
         >
           {isExtracting ? (
-             <Loader2 className="w-8 h-8 text-emerald-500 animate-spin" />
+            <Loader2 className="w-8 h-8 text-emerald-500 animate-spin" />
           ) : (
             <Upload
               className={cn(
-                "w-8 h-8 transition-colors duration-700",
-                isDragActive ? "text-black" : "text-gray-500 group-hover:text-emerald-500"
+                "w-8 h-8 transition-colors",
+                isDragActive ? "text-black" : "text-white group-hover:text-black"
               )}
             />
           )}
         </div>
-        <div className="text-center space-y-4">
-          <h3 className="text-2xl font-black tracking-tighter uppercase italic text-white">
-            {isDragActive ? "Release_Protocol" : "Initiate_Sequence"}
+
+        <div className="text-center space-y-2">
+          <h3 className="font-pixel text-2xl uppercase text-white group-hover:text-emerald-500 transition-colors">
+            {isDragActive ? "RELEASE_PAYLOAD" : "INITIATE_UPLOAD"}
           </h3>
-          <p className="text-[10px] font-mono text-gray-500 uppercase tracking-[0.4em] max-w-xs leading-relaxed opacity-50">
-            Drop files, directories, or <span className="text-emerald-500 font-bold">.zip archives</span> to perform a multi-layered carbon audit.
+          <p className="font-mono text-[10px] text-gray-500 uppercase tracking-widest max-w-xs mx-auto">
+            Drop Source_Code or <span className="text-emerald-500">.ZIP</span> Modules
           </p>
         </div>
-        
-        <div className="mt-12 flex gap-4">
-           {['JS/TS', 'PYTHON', 'RUST', 'ZIP'].map(tech => (
-             <span key={tech} className="px-4 py-1.5 rounded-full border border-white/5 bg-white/[0.02] text-[8px] font-mono text-gray-600 font-bold uppercase tracking-widest">{tech}</span>
-           ))}
+
+        <div className="flex gap-2 pt-4">
+          {['JS', 'TS', 'PY', 'RS', 'ZIP'].map(tech => (
+            <span key={tech} className="px-2 py-1 border border-white/20 bg-white/5 text-[9px] font-pixel text-gray-500">{tech}</span>
+          ))}
         </div>
       </div>
 
-      {/* Decorative Gradient */}
-      <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-transparent via-emerald-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+      {/* Grid Pattern Overlay */}
+      <div className="absolute inset-0 pointer-events-none opacity-10"
+        style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '20px 20px' }}
+      />
     </div>
   );
 }

@@ -1,146 +1,182 @@
-import { Metadata } from "next";
-import { Zap, Globe, Code, ArrowRight, Terminal, Cpu, Sparkles } from "lucide-react";
-import Link from "next/link";
+"use client";
 
-export const metadata: Metadata = {
-  title: "Protocol — About",
-  description: "Architecture and methodology of the CO2DE carbon engineering platform.",
-};
+import { useRef } from "react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useGSAP } from "@gsap/react";
+import { ArrowRight } from "lucide-react";
+import Link from "next/link";
+import { cn } from "@/lib/utils";
+
+if (typeof window !== "undefined") {
+  gsap.registerPlugin(ScrollTrigger);
+}
 
 const stats = [
-  { value: "2-4%", label: "global emissons from tech" },
-  { value: "PUE 1.1", label: "target infrastructure" },
-  { value: "1.6B", label: "tons of CO₂ from code" },
+  { value: "2-4%", label: "Global Tech Emissions" },
+  { value: "1.1", label: "Target PUE" },
+  { value: "1.6B", label: "Tons CO₂ from Code" },
 ];
 
 const principles = [
   {
-    icon: Terminal,
-    title: "AST_COMPLEXITY",
-    description: "Deep-layer Abstract Syntax Tree parsing for JS/TS to identify Big O complexity and compute-expensive iteration patterns.",
+    title: "AST Complexity",
+    description: "Deep-layer Abstract Syntax Tree parsing identifying Big O complexity patterns.",
   },
   {
-    icon: Globe,
-    title: "GRID_SYNCHRONIZATION",
-    description: "Dynamic carbon-aware calculations synchronized with real-world PUE factors and live grid intensity across global regions.",
+    title: "Grid Sync",
+    description: "Carbon-aware calculations synchronized with live regional power intensity.",
   },
   {
-    icon: Sparkles,
-    title: "REFACTOR_FORCE",
-    description: "AI-driven code transformation engine designed to rewrite logic for maximum energy efficiency without altering functionality.",
+    title: "Refactor Force",
+    description: "AI-driven transformation engine rewriting logic for maximum efficiency.",
   },
 ];
 
 export default function AboutPage() {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useGSAP(() => {
+    const tl = gsap.timeline();
+
+    tl.from(".hero-text", {
+      y: 50,
+      opacity: 0,
+      duration: 1.2,
+      stagger: 0.2,
+      ease: "power3.out"
+    });
+
+    gsap.utils.toArray('.anim-card').forEach((card: any, i) => {
+      gsap.from(card, {
+        scrollTrigger: {
+          trigger: card,
+          start: "top 90%",
+        },
+        y: 40,
+        opacity: 0,
+        duration: 1,
+        delay: i * 0.1,
+        ease: "power3.out"
+      });
+    });
+
+  }, { scope: containerRef });
+
   return (
-    <div className="bg-[#0a0a0a] min-h-screen text-white pt-32 pb-40 px-4 selection:bg-emerald-500 selection:text-white">
-      <div className="container mx-auto max-w-6xl">
-        
-        {/* HERO SECTION */}
-        <div className="mb-40">
-          <div className="flex items-center gap-4 mb-12">
-            <div className="h-px w-12 bg-emerald-500" />
-            <span className="text-[10px] font-mono tracking-[0.5em] uppercase text-emerald-500">Methodology v3.2</span>
-          </div>
-          <h1 className="text-6xl sm:text-8xl md:text-[9rem] font-black tracking-tighter uppercase leading-[0.8] mb-16 italic">
-            The Code <br /> Is The <br /> <span className="text-emerald-500">Footprint</span>_
-          </h1>
-          <p className="text-xl sm:text-2xl text-gray-500 font-medium leading-relaxed max-w-3xl lowercase first-letter:uppercase">
-            In an era of rapid digital expansion, we believe efficiency is no longer just a performance metric—it is an environmental necessity.
-          </p>
+    <div ref={containerRef} className="bg-[#0a0a0a] min-h-screen text-white font-sans selection:bg-white/20 selection:text-white">
+
+      {/* HERO SECTION */}
+      <section className="relative h-[80vh] w-full flex items-center justify-center overflow-hidden">
+        <div className="absolute inset-0 z-0">
+          <img
+            src="/about-bg.jpg"
+            alt="Methodology Background"
+            className="w-full h-full object-cover opacity-50 scale-105 animate-slow-zoom"
+          />
+          <div className="absolute inset-0 bg-linear-to-b from-[#0a0a0a]/30 via-[#0a0a0a]/60 to-[#0a0a0a]"></div>
         </div>
 
-        {/* STATS STRIP */}
-        <div className="grid md:grid-cols-3 gap-12 mb-40 py-16 border-y border-white/5 bg-white/[0.01]">
+        <div className="relative z-10 max-w-4xl mx-auto px-6 text-center space-y-8">
+          <span className="hero-text inline-block py-1 px-3 border border-white/20 rounded-full text-xs font-light tracking-widest uppercase text-white/80 bg-black/20 backdrop-blur-md">
+            Methodology v3.2
+          </span>
+          <h1 className="hero-text text-5xl md:text-7xl lg:text-8xl font-medium tracking-tight leading-tight">
+            The code is the <br /> <span className="italic text-white/50">footprint.</span>
+          </h1>
+          <p className="hero-text text-lg text-gray-300 font-light max-w-2xl mx-auto leading-relaxed">
+            Efficiency is no longer just a performance metric—it is an environmental necessity.
+          </p>
+        </div>
+      </section>
+
+      {/* STATS STRIP */}
+      <section className="relative z-10 max-w-6xl mx-auto px-6 mb-32">
+        <div className="grid md:grid-cols-3 gap-8 border-y border-white/5 py-16">
           {stats.map((stat, i) => (
-            <div key={i} className="space-y-4 text-center">
-              <p className="text-6xl font-black tracking-tighter text-white italic">{stat.value}</p>
-              <p className="text-[10px] font-mono uppercase tracking-[0.3em] text-gray-600">{stat.label}</p>
+            <div key={i} className="anim-card text-center space-y-2 group cursor-default">
+              <p className="text-4xl md:text-5xl font-light tracking-tight group-hover:scale-110 transition-transform duration-500 ease-out">{stat.value}</p>
+              <p className="text-sm font-medium text-gray-500 uppercase tracking-widest">{stat.label}</p>
             </div>
           ))}
         </div>
+      </section>
 
-        {/* ARCHITECTURE SECTION */}
-        <div className="mb-40 space-y-24">
-           <div className="flex items-center gap-8">
-              <h2 className="text-sm font-mono text-gray-400 uppercase tracking-[0.4em] whitespace-nowrap">Core_Architecture</h2>
-              <div className="h-px flex-1 bg-white/5" />
-           </div>
+      {/* CORE ARCHITECTURE */}
+      <section className="relative z-10 max-w-6xl mx-auto px-6 mb-32 space-y-16">
+        <div className="anim-card flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-white/10 pb-8">
+          <h2 className="text-3xl font-medium">Core Architecture</h2>
+          <p className="text-gray-400 max-w-md text-sm leading-relaxed">
+            Our engine parses computational physics—how data moves, cycles consumed, and hardware utilization.
+          </p>
+        </div>
 
-           <div className="grid md:grid-cols-3 gap-16">
-              {principles.map((principle, i) => (
-                <div key={i} className="group space-y-10">
-                  <div className="w-16 h-16 rounded-[2rem] bg-white/[0.03] flex items-center justify-center border border-white/10 group-hover:bg-emerald-500 group-hover:border-emerald-500 transition-all group-hover:rotate-12 group-hover:shadow-[0_0_40px_rgba(16,185,129,0.2)]">
-                    <principle.icon size={28} className="text-gray-500 group-hover:text-white transition-colors" />
-                  </div>
-                  <div className="space-y-4">
-                    <h3 className="text-2xl font-black tracking-tighter uppercase italic">{principle.title}</h3>
-                    <p className="text-sm text-gray-500 leading-relaxed font-medium">
-                      {principle.description}
-                    </p>
-                  </div>
+        <div className="grid md:grid-cols-3 gap-6">
+          {principles.map((principle, i) => (
+            <div key={i} className="anim-card group relative p-10 rounded-4xl bg-white/2 border border-white/5 overflow-hidden hover:bg-white/4 transition-colors duration-500">
+              <div className="mb-12">
+                <span className="text-6xl font-light text-white/5 group-hover:text-white/10 transition-colors">0{i + 1}</span>
+              </div>
+              <div className="space-y-4 relative z-10">
+                <h3 className="text-xl font-medium text-white">{principle.title}</h3>
+                <p className="text-sm text-gray-400 leading-relaxed font-light">
+                  {principle.description}
+                </p>
+              </div>
+              <div className="absolute bottom-6 right-6 w-8 h-8 rounded-full border border-white/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500 group-hover:-translate-y-2 group-hover:-translate-x-2">
+                <ArrowRight size={14} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* DETAILED METHODOLOGY */}
+      <section className="relative z-10 max-w-5xl mx-auto px-6 mb-32">
+        <div className="anim-card p-12 md:p-20 rounded-[3rem] bg-linear-to-b from-white/3 to-transparent border border-white/5 backdrop-blur-xl relative overflow-hidden">
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
+            <div className="space-y-8">
+              <h2 className="text-3xl md:text-4xl font-medium leading-tight">
+                High Fidelity <br /> <span className="text-white/40 italic">Calculations</span>
+              </h2>
+              <div className="space-y-4">
+                <div className="p-4 rounded-xl bg-white/5 border border-white/5">
+                  <code className="text-xs text-gray-300 font-mono">Intensity = [Baseline * Complexity * PUE]</code>
                 </div>
-              ))}
-           </div>
-        </div>
-
-        {/* DETAILED METHODOLOGY */}
-        <div className="mb-40 p-12 md:p-24 rounded-[4rem] bg-white/[0.02] border border-white/5 relative overflow-hidden">
-           <div className="absolute top-0 right-0 p-24 opacity-[0.02] pointer-events-none group-hover:scale-110 transition-transform">
-              <Cpu size={400} />
-           </div>
-           
-           <div className="relative z-10 grid lg:grid-cols-2 gap-20">
-              <div className="space-y-12">
-                 <h2 className="text-4xl md:text-5xl font-black tracking-tighter uppercase italic leading-none">
-                    High_Fidelity <br /> <span className="text-emerald-500">Calculations</span>.
-                 </h2>
-                 <div className="space-y-8 font-mono text-[10px] text-gray-500 uppercase tracking-widest">
-                    <div className="flex items-start gap-4 p-6 rounded-2xl bg-black/50 border border-white/5">
-                       <span className="text-emerald-500 font-bold">01/</span>
-                       <span>Intensity = [Baseline * Complexity * PUE * Hardware_Factor]</span>
-                    </div>
-                    <div className="flex items-start gap-4 p-6 rounded-2xl bg-black/50 border border-white/5">
-                       <span className="text-emerald-500 font-bold">02/</span>
-                       <span>Emissions = (Intensity * Grid_gCO2e) / Transmission_Efficiency</span>
-                    </div>
-                 </div>
               </div>
-              <div className="space-y-8">
-                 <p className="text-gray-400 leading-relaxed">
-                    Our calculation engine doesn&apos;t just count lines of code. It looks at the <span className="text-white">computational physics</span> of software—how data moves, how many cycles it takes to sort an array, and what hardware class it finally runs on.
-                 </p>
-                 <p className="text-gray-400 leading-relaxed">
-                    By integrating live grid intensity and regional PUE data, we provide a mathematically defensible estimate of your digital emissions.
-                 </p>
-              </div>
-           </div>
+            </div>
+            <div className="space-y-6 text-gray-400 font-light leading-relaxed">
+              <p>
+                We don't just count lines of code. We analyze the <span className="text-white font-normal">computational energy</span> required to execute your logic.
+              </p>
+              <p>
+                By integrating live grid intensity and regional hardware profiles, we provide a mathematically defensible estimate of your digital emissions.
+              </p>
+            </div>
+          </div>
         </div>
+      </section>
 
-        {/* CALL TO ACTION */}
-        <div className="p-16 md:p-32 rounded-[5rem] bg-emerald-500 text-black relative overflow-hidden group">
-          <div className="relative z-10 flex flex-col items-center text-center">
-            <h2 className="text-5xl md:text-[7rem] font-black tracking-tighter uppercase leading-[0.85] mb-12 italic">
-               Commit <br /> To The <br /> Future_
-            </h2>
-            <p className="text-lg font-bold max-w-md mb-16 opacity-80 uppercase tracking-tighter">
-              Start measuring your impact. Every millisecond of compute saved counts toward a sustainable future.
-            </p>
-            <Link 
+      {/* CTA */}
+      <section className="relative z-10 max-w-3xl mx-auto px-6 pb-32 text-center">
+        <div className="anim-card space-y-8">
+          <h2 className="text-4xl md:text-5xl font-medium tracking-tight">
+            Ready to audit?
+          </h2>
+          <p className="text-gray-400 font-light">
+            Start measuring your impact. Every millisecond counts.
+          </p>
+          <div className="pt-4">
+            <Link
               href="/analyze"
-              className="group/btn flex items-center gap-6 bg-black text-white px-12 py-6 rounded-full font-black transition-all hover:px-16 active:scale-95 uppercase tracking-tighter text-sm"
+              className="inline-flex items-center gap-3 bg-white text-black px-10 py-5 rounded-full text-sm font-medium hover:scale-105 transition-transform duration-300"
             >
-              INITIALIZE_AUDIT
-              <ArrowRight size={20} className="group-hover/btn:translate-x-2 transition-transform" />
+              Initialize Audit <ArrowRight size={18} />
             </Link>
           </div>
-
-          <div className="absolute top-0 right-0 p-24 opacity-10 group-hover:rotate-12 transition-all pointer-events-none">
-            <Globe size={500} />
-          </div>
         </div>
+      </section>
 
-      </div>
     </div>
   );
 }
