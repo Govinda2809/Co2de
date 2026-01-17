@@ -6,12 +6,10 @@ let statusBarItem: vscode.StatusBarItem;
 export function activate(context: vscode.ExtensionContext) {
 	console.log('CO2DE Extension is now active!');
 
-	// 1. Create Status Bar Item
-	statusBarItem = vscode.StatusBarItem.create(vscode.StatusBarAlignment.Right, 100);
+	statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
 	statusBarItem.command = 'co2de.analyze';
 	context.subscriptions.push(statusBarItem);
 
-	// 2. Register Analysis Command
 	let disposable = vscode.commands.registerCommand('co2de.analyze', () => {
 		const editor = vscode.window.activeTextEditor;
 		if (editor) {
@@ -22,17 +20,26 @@ export function activate(context: vscode.ExtensionContext) {
 
 			const metrics = calculateEnergyMetrics(fileSize, fileName, content);
 			
-			vscode.window.showInformationMessage(
-				`CO2DE Analysis: ${metrics.estimatedCO2} ${metrics.co2Unit} | Score: ${Math.round(10 - metrics.complexity)}/10`
-			);
+			const message = `[CO2DE] Protocol Audit: 
+- Carbon Footprint: ${metrics.estimatedCO2}g CO2e
+- Energy Draw: ${metrics.estimatedEnergy} kWh
+- Structural Complexity: O(${metrics.complexity.toFixed(2)})
+- Recursion: ${metrics.recursionDetected ? 'ALERT: High Intensity' : 'None detected'}`;
+
+			vscode.window.showInformationMessage(message, "View Dashboard").then(selection => {
+				if (selection === "View Dashboard") {
+					vscode.env.openExternal(vscode.Uri.parse("http://localhost:3000/analyze"));
+				}
+			});
 			
 			updateStatusBar(metrics.estimatedCO2);
+		} else {
+			vscode.window.showWarningMessage("Please open a source file to analyze CO2 footprint.");
 		}
 	});
 
 	context.subscriptions.push(disposable);
 
-	// 3. Update on text change
 	vscode.workspace.onDidChangeTextDocument(e => {
 		if (vscode.window.activeTextEditor && e.document === vscode.window.activeTextEditor.document) {
 			const content = e.document.getText();
@@ -45,7 +52,6 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	});
 
-	// Trigger initial update
 	if (vscode.window.activeTextEditor) {
 		const doc = vscode.window.activeTextEditor.document;
 		const metrics = calculateEnergyMetrics(
@@ -59,7 +65,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 function updateStatusBar(co2: number) {
 	statusBarItem.text = `$(leaf) ${co2}g CO2`;
-	statusBarItem.tooltip = `Estimated Carbon Footprint for this file`;
+	statusBarItem.tooltip = `Estimated Carbon Footprint for this file (Updated in Real-time)`;
 	statusBarItem.show();
 }
 

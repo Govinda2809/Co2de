@@ -172,6 +172,8 @@ export default function DashboardPage() {
                       <h3 className="text-3xl font-black truncate tracking-tighter uppercase italic">{analysis.fileName}</h3>
                       <div className="flex flex-wrap items-center gap-6 text-[10px] font-mono text-gray-600 uppercase tracking-widest">
                         <span className="px-3 py-1 rounded-full border border-white/5 bg-white/[0.02]">{(analysis.fileSize / 1024).toFixed(1)} KB Packet</span>
+                        {analysis.region && <span className="text-emerald-500/50">{analysis.region}</span>}
+                        {analysis.complexity && <span className="text-blue-500/50">O({analysis.complexity.toFixed(1)})</span>}
                         <span className="flex items-center gap-2">
                           <Clock size={12} />
                           {new Date(analysis.createdAt).toLocaleDateString()}

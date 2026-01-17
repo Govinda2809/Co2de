@@ -14,24 +14,48 @@ export const AIReviewSchema = z.object({
   improvement: z.string(),
 });
 
-// Matches Appwrite Collection Structure exactly
-// Added optional fields for advanced metrics to maintain backward compatibility
+/**
+ * PROTOCOL_GRADE_V4.0_SCHEMA
+ * Unified schema for high-fidelity code sustainability audits.
+ * Optimized for Appwrite NoSQL document storage.
+ */
 export const AnalysisItemSchema = z.object({
+  // Metadata & System
   $id: z.string().optional(),
+  userId: z.string().optional(),
+  createdAt: z.string(),
+  engineVersion: z.string().default('4.0.0-gamma'),
+  
+  // File Informatics
   fileName: z.string().min(1),
   fileSize: z.number().nonnegative(),
   fileId: z.string().min(1),
-  estimatedEnergy: z.number().nonnegative(),
-  estimatedCO2: z.number().nonnegative(),
+  lineCount: z.number().optional(),
+  language: z.string().optional(),
+
+  // Primary Metrics
+  estimatedEnergy: z.number().nonnegative(), // kWh
+  estimatedCO2: z.number().nonnegative(),    // gCO2e
   score: z.number().min(0).max(10),
+
+  // Infrastructure Context
+  region: z.string().optional(),
+  hardwareProfile: z.string().optional(),
+  gridIntensity: z.number().optional(),      // gCO2e/kWh
+  pueFactor: z.number().optional(),
+
+  // High-Fidelity Heuristics
+  complexity: z.number().optional(),         // Big O Factor
+  memPressure: z.number().optional(),        // Allocation Factor
+  recursionDetected: z.boolean().optional(),
+  
+  // AI Insights
   bottleneck: z.string(),
   optimization: z.string(),
   improvement: z.string(),
-  createdAt: z.string(),
-  userId: z.string().optional(),
-  complexity: z.number().optional(),
-  memPressure: z.number().optional(),
-  lineCount: z.number().optional(),
+  
+  // Delta Context (Optional)
+  optimizationDelta: z.number().optional(), // Percentage vs Original
 });
 
 export type FileUpload = z.infer<typeof FileUploadSchema>;
