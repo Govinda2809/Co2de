@@ -38,21 +38,13 @@ export default function AnalyzePage() {
     review: null,
     isAnalyzing: false,
   });
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
       router.push("/login?callbackUrl=/analyze");
     }
   }, [user, authLoading, router]);
-
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-white animate-spin" />
-      </div>
-    );
-  }
-  const [error, setError] = useState<string | null>(null);
 
   const handleFileAccepted = useCallback(async (file: File, content: string) => {
     setState((prev) => ({ ...prev, file, content, isAnalyzing: true }));
@@ -62,7 +54,6 @@ export default function AnalyzePage() {
       // 1. Calculate Metrics (Carbon-Aware)
       const metrics = await calculateEnergyMetrics(file.size, file.name, content);
 
-      // Attempt real AI analysis, fallback to mocked if API or Key is missing
       // Attempt real AI analysis
       let review;
       try {
@@ -127,6 +118,14 @@ export default function AnalyzePage() {
     });
     setError(null);
   }, []);
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-white animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="py-24 bg-[#0a0a0a] min-h-screen">
