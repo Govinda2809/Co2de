@@ -66,7 +66,7 @@ export default function AnalyzePage() {
         totalLines += m.lineCount;
       }
 
-      const gridIntensity = await (await import("@/lib/energy")).getGridIntensity(targetRegion);
+      const gridIntensity = await getGridIntensity(targetRegion);
 
       return {
         estimatedEnergy: Math.round(totalEnergy * 1000) / 1000,
