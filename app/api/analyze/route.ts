@@ -4,14 +4,31 @@ import { NextResponse } from 'next/server';
 import { AIReviewSchema } from '@/lib/schemas';
 
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+const MULEROUTER_API_KEY = process.env.MULEROUTER_API_KEY;
+
+async function callAI(code: string, systemPrompt: string, apiKey: string, url: string, model: string) {
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: model,
+      messages: [{ role: "system", content: systemPrompt }, { role: "user", content: code }],
+      response_format: { type: "json_object" }
+    }),
+  });
+
+  if (!response.ok) throw new Error(`${url} failed: ${response.statusText}`);
+  const data = await response.json();
+  if (!data.choices?.[0]?.message?.content) throw new Error("Invalid response structure");
+  return JSON.parse(data.choices[0].message.content);
+}
 
 export async function POST(request: Request) {
   try {
     const { code, mode, metrics } = await request.json();
-
-    if (!OPENROUTER_API_KEY) {
-      return NextResponse.json({ error: "API Key missing" }, { status: 500 });
-    }
 
     let systemPrompt = "";
     if (mode === 'refactor') {
@@ -21,39 +38,30 @@ export async function POST(request: Request) {
       systemPrompt = `Analyze the provided code for carbon footprint and energy efficiency. ${context}\nReturn a valid JSON object matching this schema: { score: number (1-10), bottleneck: string, optimization: string, improvement: string }. Use the provided complexity metrics to inform your score.`;
     }
 
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.0-flash-exp:free",
-        messages: [{ role: "system", content: systemPrompt }, { role: "user", content: code }],
-        response_format: { type: "json_object" }
-      }),
-    });
-
-    const data = await response.json();
-    if (!data.choices?.[0]?.message?.content) {
-      throw new Error("Invalid API response structure");
+    let content;
+    try {
+      // Primary: OpenRouter
+      if (!OPENROUTER_API_KEY) throw new Error("OpenRouter Key missing");
+      content = await callAI(code, systemPrompt, OPENROUTER_API_KEY, "https://openrouter.ai/api/v1/chat/completions", "google/gemini-2.0-flash-exp:free");
+    } catch (e) {
+      console.warn("Primary Router Failed, engaging Fallback Protocol...", e);
+      // Fallback: MuleRouter or another provider
+      if (!MULEROUTER_API_KEY) throw new Error("Both Primary and Fallback keys missing.");
+      content = await callAI(code, systemPrompt, MULEROUTER_API_KEY, "https://mulerouter.com/api/v1/chat/completions", "meta-llama/llama-3-8b-instruct");
     }
-
-    const content = JSON.parse(data.choices[0].message.content);
 
     if (mode === 'refactor') {
       return NextResponse.json({ 
-        refactoredCode: content.refactoredCode, 
-        explanation: content.explanation 
+        refactoredCode: content.refactoredCode || "Code optimization failed.", 
+        explanation: content.explanation || "No explanation provided." 
       });
     }
 
-    // Validate review schema
     const validated = AIReviewSchema.parse(content);
     return NextResponse.json({ review: validated });
 
   } catch (error: any) {
-    console.error("API Error:", error);
-    return NextResponse.json({ error: "Analysis failed: " + error.message }, { status: 500 });
+    console.error("Critical API Failure:", error);
+    return NextResponse.json({ error: "Analysis engine offline: " + error.message }, { status: 500 });
   }
 }

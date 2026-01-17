@@ -112,8 +112,8 @@ export async function calculateEnergyMetrics(
   const complexity = content ? calculateASTComplexity(content, lang) : 1;
   const langMultiplier = LANGUAGE_MULTIPLIERS[lang] || 1.0;
   
-  const regionData = (REGIONS as any)[region];
-  const hardwareData = (HARDWARE_PROFILES as any)[hardware];
+  const regionData = (REGIONS as any)[region] || REGIONS.europe;
+  const hardwareData = (HARDWARE_PROFILES as any)[hardware] || HARDWARE_PROFILES.laptop;
 
   const baseEnergy = (fileSize / 1024) * ENERGY_MULTIPLIER;
   // Final Adjusted Energy considering Hardware and Datacenter Efficiency (PUE)

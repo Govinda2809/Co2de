@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { FileUpload } from "@/components/upload";
 import { MetricsDisplay, EnergyScoreChart, AIReviewCard } from "@/components/dashboard";
-import { calculateEnergyMetrics, REGIONS, HARDWARE_PROFILES, getGridIntensity } from "@/lib/energy";
+import { calculateEnergyMetrics, REGIONS, HARDWARE_PROFILES, getGridIntensity, getAIReview, getAIRefactor } from "@/lib/energy";
 import { AnalysisItemSchema, AIReview } from "@/lib/schemas";
-import { Sparkles, RotateCcw, Loader2, Zap, TrendingUp, BarChart3, Globe, Cpu, Play, Terminal, CheckCircle2, Files, FileCode, Info } from "lucide-react";
+import { Sparkles, RotateCcw, Loader2, Zap, TrendingUp, BarChart3, Globe, Cpu, Play, Terminal, CheckCircle2, FileStack, FileCode, Info } from "lucide-react";
 import { databases, DATABASE_ID, COLLECTION_ID, ID } from "@/lib/appwrite";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
@@ -108,7 +108,6 @@ export default function AnalyzePage() {
       if (!metrics) throw new Error("Could not compute metrics for the provided packet.");
 
       const mainIndex = 0; // Entry point
-      const { getAIReview } = await import("@/lib/energy");
       const review = await getAIReview(contents[mainIndex], metrics);
 
       if (user && DATABASE_ID && COLLECTION_ID) {
@@ -139,7 +138,6 @@ export default function AnalyzePage() {
     if (state.contents.length === 0) return;
     setState(prev => ({ ...prev, isRefactoring: true }));
     try {
-      const { getAIRefactor } = await import("@/lib/energy");
       const refactored = await getAIRefactor(state.contents[0]);
       setState(prev => ({ ...prev, refactored, isRefactoring: false }));
     } catch (e) {
@@ -151,6 +149,7 @@ export default function AnalyzePage() {
   const runCode = () => {
     setState(prev => ({ ...prev, isRunning: true, runResults: ["Initializing Sandbox Environment...", "Checking Memory Constraints..."] }));
     
+    const startTime = Date.now();
     setTimeout(() => {
       try {
         const logs: string[] = [];
@@ -160,10 +159,11 @@ export default function AnalyzePage() {
         const sandbox = new Function("console", state.contents[0]);
         sandbox({ log: captureLog, error: captureLog, warn: captureLog });
         
+        const duration = Date.now() - startTime;
         setState(prev => ({ 
           ...prev, 
           isRunning: false, 
-          runResults: [...prev.runResults, "✅ Execution Sequence Successful.", ...logs] 
+          runResults: [...prev.runResults, `✅ Execution Sequence Successful (${duration}ms).`, ...logs] 
         }));
       } catch (e: any) {
         setState(prev => ({ 
@@ -172,7 +172,7 @@ export default function AnalyzePage() {
           runResults: [...prev.runResults, "❌ Runtime Error Detected:", e.message] 
         }));
       }
-    }, 1500);
+    }, 1200);
   };
 
   const handleClear = () => {
