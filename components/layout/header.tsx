@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X, Github, BarChart3, LogOut } from "lucide-react";
+import { Menu, X, Github, BarChart3, LogOut, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
@@ -188,13 +188,16 @@ export function Header() {
                 onClick={() => setShowUserMenu(!showUserMenu)}
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={handleMouseLeave}
-                className="flex items-center gap-2 px-4 py-2 text-xs font-semibold tracking-widest text-gray-400 uppercase transition-colors hover:text-white"
+                className="flex items-center justify-center px-3 py-2.5 text-gray-400 transition-colors hover:text-white"
+                aria-label="User menu"
               >
-                {user.name}
+                <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center border border-white/10">
+                  <User className="w-4 h-4" />
+                </div>
               </button>
 
               {showUserMenu && (
-                <div className="absolute right-0 top-full mt-4 w-56 p-2 rounded-2xl border border-white/10 bg-[#0a0a0a]/90 backdrop-blur-2xl shadow-xl animate-in fade-in zoom-in-95 duration-200">
+                <div className="absolute right-0 top-full mt-4 w-60 p-2 rounded-2xl border border-white/10 bg-[#0a0a0a]/90 backdrop-blur-2xl shadow-xl animate-in fade-in zoom-in-95 duration-200">
                   <div className="px-4 py-3 border-b border-white/5 mb-2">
                     <p className="text-sm font-medium text-white">{user.name}</p>
                     <p className="text-xs text-gray-500 truncate">{user.email}</p>
