@@ -123,3 +123,4 @@ This project is open source under the MIT License.
 <p align="center">
   Made with 💚 for the planet
 </p>
+As tech’s environmental footprint grows, efficient and sustainable code helps reduce emissions and energy cost.
