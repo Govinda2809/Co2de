@@ -3,21 +3,19 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+<<<<<<< HEAD
+import { Menu, X, Github, BarChart3, LogOut, User as UserIcon } from "lucide-react";
+=======
 import { Menu, X, Github, BarChart3, LogOut, User } from "lucide-react";
+>>>>>>> 499689fa5298b70d7ac393ad928573c9e46d40bf
 import { cn } from "@/lib/utils";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { useAuth } from "@/hooks/use-auth";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-
-// Register GSAP plugins
-if (typeof window !== "undefined") {
-  gsap.registerPlugin(useGSAP, ScrollTrigger);
-}
 
 export function Header() {
   const pathname = usePathname();
-  const { user, logout } = useAuth();
+  const { user, logout, isLoading: authLoading } = useAuth();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
 
@@ -27,14 +25,9 @@ export function Header() {
   const mobileMenuRef = useRef<HTMLDivElement>(null);
 
   const handleLogout = async () => {
-    try {
-      await logout();
-      setShowUserMenu(false);
-      setShowMobileMenu(false);
-      window.location.href = "/";
-    } catch (error) {
-      console.error("Logout failed:", error);
-    }
+    setShowUserMenu(false);
+    setShowMobileMenu(false);
+    await logout();
   };
 
   const getNavItems = () => {
@@ -53,21 +46,18 @@ export function Header() {
 
   const visibleNavItems = getNavItems();
 
-  // 1. Entrance Animation
   useGSAP(() => {
     gsap.from(headerRef.current, {
       y: -50,
       opacity: 0,
       duration: 1.2,
       ease: "power3.out",
-      delay: 0.5
+      delay: 0.2
     });
   }, { scope: headerRef });
 
-  // 2. Hover Highlight Logic
   const handleMouseEnter = (e: React.MouseEvent<HTMLAnchorElement | HTMLButtonElement>) => {
     if (!hoverHighlightRef.current) return;
-
     const link = e.currentTarget;
     const linkRect = link.getBoundingClientRect();
     const navRect = navRef.current?.getBoundingClientRect();
@@ -85,8 +75,6 @@ export function Header() {
         duration: 0.4,
         ease: "power2.out"
       });
-
-      // Animate text color
       gsap.to(link, { color: "#ffffff", duration: 0.2 });
     }
   };
@@ -96,36 +84,10 @@ export function Header() {
   };
 
   const handleNavMouseLeave = () => {
-    // Hide highlight when leaving the entire nav
     if (hoverHighlightRef.current) {
       gsap.to(hoverHighlightRef.current, { opacity: 0, duration: 0.3 });
     }
   }
-
-  // 3. Mobile Menu Animation
-  useGSAP(() => {
-    if (showMobileMenu) {
-      gsap.to(mobileMenuRef.current, {
-        height: "100vh",
-        opacity: 1,
-        duration: 0.5,
-        ease: "power3.inOut",
-        pointerEvents: "all"
-      });
-      gsap.fromTo(".mobile-link",
-        { y: 50, opacity: 0 },
-        { y: 0, opacity: 1, stagger: 0.1, duration: 0.5, delay: 0.2 }
-      );
-    } else {
-      gsap.to(mobileMenuRef.current, {
-        height: 0,
-        opacity: 0,
-        duration: 0.5,
-        ease: "power3.inOut",
-        pointerEvents: "none"
-      });
-    }
-  }, [showMobileMenu]);
 
   return (
     <>
@@ -133,23 +95,28 @@ export function Header() {
         ref={headerRef}
         className="fixed top-6 left-0 w-full z-50 flex justify-center pointer-events-none"
       >
-        {/* LOGO (Top Left) */}
-        <div className="pointer-events-auto absolute left-6 top-1/2 -translate-y-1/2 hidden md:block">
-          <Link href="/" className="text-xl font-bold tracking-tighter hover:opacity-70 transition-opacity text-white">
-            CO2DE
+        <div className="pointer-events-auto absolute left-6 top-1/2 -translate-y-1/2 hidden lg:block">
+          <Link href="/" className="text-xl font-black tracking-tighter text-white hover:opacity-70 transition-opacity">
+            CO2DE_
           </Link>
         </div>
 
-        {/* CAPSULE NAVBAR (Desktop) */}
         <nav
           ref={navRef}
           onMouseLeave={handleNavMouseLeave}
+<<<<<<< HEAD
           className="pointer-events-auto hidden md:flex items-center gap-1 p-1.5 rounded-full bg-white/5 backdrop-blur-3xl border border-white/10 shadow-2xl relative"
+=======
+<<<<<<< HEAD
+          className="pointer-events-auto flex items-center gap-1 p-1.5 rounded-full bg-white/[0.03] backdrop-blur-3xl border border-white/10 shadow-2xl relative overflow-hidden"
+=======
+          className="pointer-events-auto hidden md:flex items-center gap-1 p-1.5 rounded-full bg-white/5 backdrop-blur-3xl border border-white/10 shadow-2xl relative"
+>>>>>>> cc51710 (Allow user dropdown to overflow navbar)
+>>>>>>> temp_resolve
         >
-          {/* Hover Highlight Element */}
           <div
             ref={hoverHighlightRef}
-            className="absolute bg-white/15 rounded-full pointer-events-none opacity-0"
+            className="absolute bg-white/[0.08] rounded-full pointer-events-none opacity-0"
             style={{ height: '100%', top: 0 }}
           />
 
@@ -160,7 +127,7 @@ export function Header() {
               onMouseEnter={handleMouseEnter}
               onMouseLeave={handleMouseLeave}
               className={cn(
-                "relative z-10 px-5 py-2.5 text-xs font-semibold tracking-widest text-gray-400 transition-colors uppercase hover:text-white",
+                "relative z-10 px-6 py-2.5 text-[10px] font-bold tracking-[0.2em] text-gray-500 transition-colors uppercase hover:text-white",
                 pathname === item.href && "text-white"
               )}
             >
@@ -207,6 +174,7 @@ export function Header() {
                   <Link
                     href="/dashboard"
                     className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors"
+                    onClick={() => setShowUserMenu(false)}
                   >
                     <BarChart3 className="w-4 h-4" />
                     Dashboard
@@ -256,57 +224,48 @@ export function Header() {
         </div>
       </header>
 
-      {/* MOBILE MENU OVERLAY */}
+      {/* Mobile Menu Overlay */}
       <div
-        ref={mobileMenuRef}
-        className="fixed inset-0 z-40 bg-[#0a0a0a] flex flex-col items-center justify-center pointer-events-none opacity-0"
-        style={{ height: 0 }}
+        className={cn(
+          "fixed inset-0 z-40 bg-black/95 flex flex-col items-center justify-center transition-all duration-700 ease-in-out px-6",
+          showMobileMenu ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-full pointer-events-none"
+        )}
       >
-        <Link
-          href="/"
-          onClick={() => setShowMobileMenu(false)}
-          className="mobile-link text-4xl md:text-5xl font-bold tracking-tighter text-white py-4 uppercase hover:text-gray-500 transition-colors"
-        >
-          Home
-        </Link>
-
-        {visibleNavItems.map((item) => (
+        <div className="text-center space-y-8">
           <Link
-            key={item.href}
-            href={item.href}
+            href="/"
+            className="text-5xl font-black italic tracking-tighter text-white uppercase block"
             onClick={() => setShowMobileMenu(false)}
-            className="mobile-link text-4xl md:text-5xl font-bold tracking-tighter text-white py-4 uppercase hover:text-gray-500 transition-colors"
           >
-            {item.label}
+            Home_
           </Link>
-        ))}
-
-        {user ? (
-          <button
-            onClick={handleLogout}
-            className="mobile-link text-4xl md:text-5xl font-bold tracking-tighter text-red-500 py-4 uppercase hover:text-red-400 transition-colors"
-          >
-            Logout
-          </button>
-        ) : (
-          <>
+          {visibleNavItems.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              onClick={() => setShowMobileMenu(false)}
+              className="text-5xl font-black italic tracking-tighter text-white uppercase block hover:text-emerald-500 transition-colors"
+            >
+              {item.label}
+            </Link>
+          ))}
+          {user ? (
+            <button
+              onClick={handleLogout}
+              className="text-5xl font-black italic tracking-tighter text-red-500 uppercase block"
+            >
+              Terminate_
+            </button>
+          ) : (
             <Link
               href="/login"
               onClick={() => setShowMobileMenu(false)}
-              className="mobile-link text-4xl md:text-5xl font-bold tracking-tighter text-white py-4 uppercase hover:text-gray-500 transition-colors"
+              className="text-5xl font-black italic tracking-tighter text-emerald-500 uppercase block"
             >
-              Login
+              Access_
             </Link>
-            <Link
-              href="/signup"
-              onClick={() => setShowMobileMenu(false)}
-              className="mobile-link text-4xl md:text-5xl font-bold tracking-tighter text-white py-4 uppercase hover:text-gray-500 transition-colors"
-            >
-              Signup
-            </Link>
-          </>
-        )}
-
+          )}
+        </div>
       </div>
     </>
   );
