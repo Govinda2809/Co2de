@@ -28,7 +28,6 @@ function SeverityBadge({ severity }: { severity: string }) {
 
 function DependencyCard({ dep }: { dep: Dependency }) {
   return (
-  return (
     <div className="p-8 rounded-[2.5rem] bg-white/[0.02] border border-white/5 hover:border-emerald-500/20 transition-all group space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
