@@ -2,16 +2,22 @@
 
 ![Co2de Logo](resources/co2de_logo.png)
 
-## About
+A modern web application built with Next.js 16, React 19, and TailwindCSS 4.
 
-Co2de is a modern web application project.
+## 🚀 Tech Stack
 
-## Getting Started
+- **Framework:** [Next.js 16](https://nextjs.org/) - React framework with App Router
+- **UI Library:** [React 19](https://react.dev/) - Latest React with concurrent features
+- **Styling:** [TailwindCSS 4](https://tailwindcss.com/) - Utility-first CSS framework
+- **Language:** [TypeScript](https://www.typescriptlang.org/) - Type-safe JavaScript
+- **Linting:** [ESLint 9](https://eslint.org/) - Code quality tool
+
+## 📦 Getting Started
 
 ### Prerequisites
 
-- Node.js 18+
-- npm or yarn
+- Node.js 18.18+
+- npm, yarn, or pnpm
 
 ### Installation
 
@@ -29,20 +35,38 @@ npm install
 npm run dev
 ```
 
-## Project Structure
+Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+## 📁 Project Structure
 
 ```
 Co2de/
-├── resources/          # Static assets and images
-│   └── co2de_logo.png  # Project logo
-├── .gitignore          # Git ignore rules
-└── README.md           # Project documentation
+├── app/                  # Next.js App Router pages
+│   ├── layout.tsx        # Root layout
+│   ├── page.tsx          # Home page
+│   └── globals.css       # Global styles
+├── public/               # Static assets
+├── resources/            # Project resources
+│   └── co2de_logo.png    # Project logo
+├── package.json          # Dependencies and scripts
+├── tailwind.config.ts    # TailwindCSS configuration
+├── tsconfig.json         # TypeScript configuration
+└── next.config.ts        # Next.js configuration
 ```
 
-## License
+## 🛠️ Available Scripts
+
+| Command         | Description              |
+| --------------- | ------------------------ |
+| `npm run dev`   | Start development server |
+| `npm run build` | Build for production     |
+| `npm run start` | Start production server  |
+| `npm run lint`  | Run ESLint               |
+
+## 📄 License
 
 This project is private.
 
-## Author
+## 👤 Author
 
-- **Govinda** - [GitHub](https://github.com/Govinda2809)
+**Govinda** - [GitHub](https://github.com/Govinda2809)
