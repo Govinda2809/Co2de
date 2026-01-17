@@ -104,15 +104,7 @@ export function Header() {
         <nav
           ref={navRef}
           onMouseLeave={handleNavMouseLeave}
-<<<<<<< HEAD
           className="pointer-events-auto hidden md:flex items-center gap-1 p-1.5 rounded-full bg-white/5 backdrop-blur-3xl border border-white/10 shadow-2xl relative"
-=======
-<<<<<<< HEAD
-          className="pointer-events-auto flex items-center gap-1 p-1.5 rounded-full bg-white/[0.03] backdrop-blur-3xl border border-white/10 shadow-2xl relative overflow-hidden"
-=======
-          className="pointer-events-auto hidden md:flex items-center gap-1 p-1.5 rounded-full bg-white/5 backdrop-blur-3xl border border-white/10 shadow-2xl relative"
->>>>>>> cc51710 (Allow user dropdown to overflow navbar)
->>>>>>> temp_resolve
         >
           <div
             ref={hoverHighlightRef}
