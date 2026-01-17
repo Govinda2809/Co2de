@@ -46,7 +46,7 @@ export default function Home() {
 
   }, { scope: containerRef });
 
-  const manifestoText = "IN ORDER TO BUILD, DEVELOP, IMPACT, CHANGE, DESIGN, BUILD THE FUTURE ONE LINE AT A TIME.";
+  const manifestoText = "Counting carbon today to protect tomorrow.";
   const words = manifestoText.split(" ");
 
   return (
