@@ -16,18 +16,18 @@ const stats = [
 const principles = [
   {
     icon: Zap,
-    title: "COMPUTATIONAL DENSITY",
-    description: "Write code that does more with less. Optimized algorithms are the first line of defense against hardware expansion.",
+    title: "AST-BASED COMPLEXITY",
+    description: "Our engine uses Abstract Syntax Tree (AST) parsing for JS/TS to detect Big-O time complexity and deep-nested iteration patterns.",
   },
   {
     icon: Globe,
-    title: "TEMPORAL SHIFTING",
-    description: "Understand the grid. Software should be carbon-aware, shifting workloads to periods of high renewable energy availability.",
+    title: "CARBON-AWARE GRIDS",
+    description: "Calculations are synchronized with real-time grid carbon intensity (gCO2/kWh) to provide accurate environmental footprint estimates.",
   },
   {
     icon: Code,
-    title: "HARDWARE LONGEVITY",
-    description: "Efficient code extends hardware lifecycles. Reducing CPU/RAM demand directly minimizes the need for high-turnover server hardware.",
+    title: "DETERMINISTIC HEURISTICS",
+    description: "Leveraging a rule-based expert system for 100+ languages to identify sub-optimal patterns even without AI interpretation.",
   },
 ];
 

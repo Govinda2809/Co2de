@@ -220,8 +220,8 @@ export default function DashboardPage() {
                   </div>
                 </div>
 
-                <div className="mt-10 pt-8 border-t border-white/5">
-                  <div className="flex items-start gap-4">
+                <div className="mt-10 pt-8 border-t border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                  <div className="flex items-start gap-4 flex-1">
                     <div className="mt-1 p-2 rounded-xl bg-white/5 border border-white/5">
                       <Zap size={12} className="text-emerald-500" />
                     </div>
@@ -230,6 +230,19 @@ export default function DashboardPage() {
                       {analysis.optimization}
                     </p>
                   </div>
+                  
+                  <button
+                    onClick={() => {
+                      const url = `${window.location.origin}/api/badge/${analysis.$id}`;
+                      const markdown = `![CO2DE Grade](${url})`;
+                      navigator.clipboard.writeText(markdown);
+                      alert("Markdown badge link copied to clipboard!");
+                    }}
+                    className="shrink-0 flex items-center gap-3 px-6 py-3 rounded-full border border-white/10 text-[10px] font-bold uppercase tracking-widest text-gray-500 hover:text-white hover:bg-white/5 transition-all"
+                  >
+                    <TrendingUp size={12} />
+                    Share_Badge
+                  </button>
                 </div>
               </div>
             ))}
