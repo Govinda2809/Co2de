@@ -16,11 +16,11 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Co2de - Modern Web Solutions",
-    template: "%s | Co2de",
+    default: "CO2DE - Code Environmental Impact Analyzer",
+    template: "%s | CO2DE",
   },
-  description: "Building the future with modern web technologies",
-  keywords: ["web development", "next.js", "react", "typescript"],
+  description: "Analyze the environmental footprint of your code. Get AI-powered insights and actionable optimizations for greener software.",
+  keywords: ["code analysis", "carbon footprint", "green software", "sustainability", "energy efficiency"],
 };
 
 export default function RootLayout({
@@ -29,9 +29,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className="scroll-smooth">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col bg-gray-50 dark:bg-gray-950`}
       >
         <Header />
         <main className="flex-1">{children}</main>
