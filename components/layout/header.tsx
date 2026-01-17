@@ -173,10 +173,7 @@ export function Header() {
             href="https://github.com/Govinda2809/Co2de"
             target="_blank"
             rel="noopener noreferrer"
-<<<<<<< HEAD
             aria-label="View on GitHub"
-=======
->>>>>>> 3227f54df4f2ab09373df0699d3f777ca5a6cbb9
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
             className="relative z-10 flex items-center justify-center px-3 py-2.5 text-gray-400 transition-colors hover:text-white"
@@ -247,10 +244,7 @@ export function Header() {
         <div className="md:hidden pointer-events-auto absolute right-6 top-0">
           <button
             onClick={() => setShowMobileMenu(!showMobileMenu)}
-<<<<<<< HEAD
             aria-label="Toggle mobile menu"
-=======
->>>>>>> 3227f54df4f2ab09373df0699d3f777ca5a6cbb9
             className="p-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-white"
           >
             {showMobileMenu ? <X size={20} /> : <Menu size={20} />}
