@@ -144,7 +144,7 @@ export function Header() {
         <nav
           ref={navRef}
           onMouseLeave={handleNavMouseLeave}
-          className="pointer-events-auto hidden md:flex items-center gap-1 p-1.5 rounded-full bg-white/5 backdrop-blur-3xl border border-white/10 shadow-2xl relative overflow-hidden"
+          className="pointer-events-auto hidden md:flex items-center gap-1 p-1.5 rounded-full bg-white/5 backdrop-blur-3xl border border-white/10 shadow-2xl relative"
         >
           {/* Hover Highlight Element */}
           <div
