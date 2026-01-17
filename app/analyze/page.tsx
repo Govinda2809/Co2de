@@ -1,16 +1,18 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { FileUpload } from "@/components/upload";
 import { MetricsDisplay, EnergyScoreChart, AIReviewCard, GridTimeline } from "@/components/dashboard";
 import { calculateEnergyMetrics, REGIONS, HARDWARE_PROFILES, getGridIntensity, getAIReview, getAIRefactor } from "@/lib/energy";
 import { AnalysisItemSchema, AIReview, Geolocation } from "@/lib/schemas";
-import { Sparkles, RotateCcw, Loader2, Zap, TrendingUp, BarChart3, Globe, Cpu, Terminal, CheckCircle2, FileStack, Save, Copy, Check, ShieldCheck, Box, Plus, X, Activity, ArrowRight } from "lucide-react";
+import { Sparkles, RotateCcw, Loader2, Zap, TrendingUp, BarChart3, Globe, Cpu, Terminal, CheckCircle2, FileStack, Save, Copy, Check, ShieldCheck, Box, Plus, X, Activity, ArrowRight, ArrowLeft } from "lucide-react";
 import { databases, DATABASE_ID, COLLECTION_ID, ID } from "@/lib/appwrite";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
 
 interface FeatureScope {
   id: string;
@@ -42,6 +44,8 @@ interface AnalysisState {
 export default function AnalyzePage() {
   const { user, isLoading: authLoading } = useAuth();
   const router = useRouter();
+  const containerRef = useRef<HTMLDivElement>(null);
+
   const [state, setState] = useState<AnalysisState>({
     mode: 'upload',
     files: [],
@@ -59,7 +63,7 @@ export default function AnalyzePage() {
     isSaved: false,
     lastSavedId: null,
     geolocation: null,
-    scopes: [{ id: '1', name: 'Core_Service', code: '// Start architecting...\nfunction processData(input) {\n  return input.map(item => item * 2);\n}', metrics: null }]
+    scopes: [{ id: '1', name: 'Core Service', code: '// Start architecting...\nfunction processData(input) {\n  return input.map(item => item * 2);\n}', metrics: null }]
   });
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -84,6 +88,31 @@ export default function AnalyzePage() {
     };
     fetchGeolocation();
   }, []);
+
+  useGSAP(() => {
+    const tl = gsap.timeline();
+
+    tl.from(".analyze-header", {
+      y: 30,
+      opacity: 0,
+      duration: 1,
+      ease: "power3.out"
+    })
+      .from(".control-panel", {
+        y: 20,
+        opacity: 0,
+        duration: 0.8,
+        stagger: 0.1,
+        ease: "power2.out"
+      }, "-=0.5")
+      .from(".content-area", {
+        y: 30,
+        opacity: 0,
+        duration: 0.8,
+        ease: "power2.out"
+      }, "-=0.6");
+
+  }, { scope: containerRef });
 
   const recomputeMetrics = useCallback(async (files: File[], contents: string[], targetRegion: string, targetHardware: string) => {
     try {
@@ -173,7 +202,7 @@ export default function AnalyzePage() {
     }
   }, [state.region, state.hardware, recomputeMetrics]);
 
-  const addScope = () => setState(p => ({ ...p, scopes: [...p.scopes, { id: Date.now().toString(), name: `Scope_${p.scopes.length + 1}`, code: '', metrics: null }] }));
+  const addScope = () => setState(p => ({ ...p, scopes: [...p.scopes, { id: Date.now().toString(), name: `Scope ${p.scopes.length + 1}`, code: '', metrics: null }] }));
   const updateScope = (id: string, code: string) => setState(p => ({ ...p, scopes: p.scopes.map(s => s.id === id ? { ...s, code } : s) }));
   const removeScope = (id: string) => state.scopes.length > 1 && setState(p => ({ ...p, scopes: p.scopes.filter(s => s.id !== id) }));
 
@@ -232,82 +261,87 @@ export default function AnalyzePage() {
     } catch (e) { setError("AI Refactor Engine Offline."); setState(p => ({ ...p, isRefactoring: false })); }
   };
 
-  if (authLoading) return <div className="min-h-screen bg-black flex items-center justify-center font-mono text-emerald-500 animate-pulse text-xl">LOADING_INTERFACE...</div>;
+  if (authLoading) return (
+    <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center space-y-6">
+      <div className="w-16 h-16 border-2 border-white/5 border-t-white rounded-full animate-spin" />
+    </div>
+  );
 
   return (
-    <div className="py-24 bg-black min-h-screen selection:bg-emerald-500/30 text-white font-mono">
+    <div ref={containerRef} className="py-24 bg-[#0a0a0a] min-h-screen selection:bg-white/20 selection:text-white text-white">
       <div className="container mx-auto px-6 max-w-7xl">
 
-        {/* MODE SELECTOR */}
-        <div className="flex border-b-2 border-white/20 mb-16">
-          {[
-            { id: 'upload' as const, label: 'PACKET_CAPTURE', icon: FileStack },
-            { id: 'architect' as const, label: 'FEATURE_ARCHITECT', icon: Box }
-          ].map(m => (
-            <button
-              key={m.id}
-              onClick={() => setState(p => ({ ...p, mode: m.id, metrics: null, review: null }))}
-              className={cn(
-                "flex items-center gap-4 px-8 py-4 text-xs uppercase tracking-widest transition-all relative border-r-2 border-white/20 hover:bg-white/5",
-                state.mode === m.id ? "bg-emerald-900/20 text-emerald-400" : "text-gray-500"
-              )}
-            >
-              <m.icon size={16} />
-              {m.label}
-              {state.mode === m.id && <div className="absolute top-0 left-0 w-full h-1 bg-emerald-500" />}
-            </button>
-          ))}
+        {/* Back Link */}
+        <div className="mb-8 analyze-header">
+          <Link href="/dashboard" className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-white transition-colors">
+            <ArrowLeft size={16} /> Back to Dashboard
+          </Link>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-20 mb-24">
-          <div className="flex-1 space-y-12">
-            <div className="space-y-6">
-              <div className="flex items-center gap-3">
-                <div className="w-4 h-4 bg-emerald-500 animate-pulse" />
-                <h2 className="text-xs text-emerald-500 uppercase tracking-widest">{state.mode === 'upload' ? 'ARTIFACT_STREAM' : 'SYNTHESIS_ENGINE'}</h2>
-              </div>
-              <h1 className="text-4xl lg:text-6xl uppercase leading-none text-white font-bold tracking-tight">
-                {state.mode === 'upload' ? 'AUDIT_CODE_' : 'SCULPT_IMPACT_'}
-              </h1>
-              <p className="text-gray-500 text-sm max-w-lg leading-relaxed">
-                // {state.mode === 'upload' ? "Initialising static analysis sequence..." : "Real-time carbon feedback loop active."}
-              </p>
-            </div>
+        {/* Header */}
+        <div className="flex flex-col lg:flex-row gap-12 mb-16 analyze-header justify-between items-end">
+          <div className="space-y-6">
+            <h1 className="text-5xl sm:text-7xl font-medium tracking-tight text-white leading-none">
+              {state.mode === 'upload' ? 'Analyze' : 'Architect'}
+            </h1>
+            <p className="text-xl text-gray-400 font-light max-w-lg leading-relaxed">
+              {state.mode === 'upload'
+                ? "Upload your code to measure its environmental impact."
+                : "Design and simulate energy-efficient systems."}
+            </p>
+          </div>
 
-            {/* Grid & Hardware Selectors */}
+          {/* Mode Switcher */}
+          <div className="flex p-1 bg-white/5 rounded-full border border-white/10">
+            {[
+              { id: 'upload' as const, label: 'Upload Code' },
+              { id: 'architect' as const, label: 'Architect' }
+            ].map(m => (
+              <button
+                key={m.id}
+                onClick={() => setState(p => ({ ...p, mode: m.id, metrics: null, review: null }))}
+                className={cn(
+                  "px-8 py-3 rounded-full text-sm font-medium transition-all",
+                  state.mode === m.id ? "bg-white text-black shadow-lg" : "text-gray-400 hover:text-white"
+                )}
+              >
+                {m.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex flex-col lg:flex-row gap-12 mb-24">
+          <div className="flex-1 space-y-8 control-panel">
+
+            {/* Context Settings */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              {/* Auto-detected Region */}
-              <div className="p-6 bg-black border-2 border-white/20 space-y-4 relative overflow-hidden">
-                {state.geolocation && (
-                  <div className="absolute top-4 right-4 flex items-center gap-2 px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 text-[8px] text-emerald-500 uppercase tracking-widest">
-                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    Live_IP
-                  </div>
-                )}
-                <div className="flex items-center gap-2 text-[10px] text-gray-400 uppercase tracking-widest">
-                  <Globe size={14} className="text-emerald-500" />
-                  GRID_REGION
+              <div className="p-6 bg-[#111] border border-white/5 rounded-3xl space-y-4 hover:border-white/10 transition-colors group">
+                <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
+                  <Globe size={16} className="text-white/40 group-hover:text-emerald-400 transition-colors" />
+                  Region
                 </div>
-                <p className="text-lg uppercase text-white font-bold">
-                  {state.geolocation ? (REGIONS as any)[state.region]?.label?.split(' (')[0] || state.region : "Detecting..."}
-                </p>
-                {state.geolocation?.city && (
-                  <p className="text-[10px] text-emerald-500/50 uppercase tracking-widest">
-                    📍 {state.geolocation.city}, {state.geolocation.country} • {state.geolocation.gridIntensity} gCO2e/kWh
+                <div>
+                  <p className="text-lg font-medium text-white">
+                    {state.geolocation ? (REGIONS as any)[state.region]?.label?.split(' (')[0] || state.region : "Detecting..."}
                   </p>
-                )}
+                  {state.geolocation?.city && (
+                    <p className="text-sm text-gray-500 mt-1">
+                      {state.geolocation.city}, {state.geolocation.country}
+                    </p>
+                  )}
+                </div>
               </div>
 
-              {/* Hardware Profile */}
-              <div className="p-6 bg-black border-2 border-white/20 space-y-4 hover:border-amber-500/50 transition-colors">
-                <div className="flex items-center gap-2 text-[10px] text-gray-400 uppercase tracking-widest">
-                  <Cpu size={14} className="text-amber-500" />
-                  TDP_PROFILE
+              <div className="p-6 bg-[#111] border border-white/5 rounded-3xl space-y-4 hover:border-white/10 transition-colors group">
+                <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
+                  <Cpu size={16} className="text-white/40 group-hover:text-amber-400 transition-colors" />
+                  Hardware
                 </div>
-                <select 
-                  value={state.hardware} 
-                  onChange={(e) => setState(p => ({ ...p, hardware: e.target.value }))} 
-                  className="w-full bg-transparent border-none p-0 text-lg uppercase focus:ring-0 text-white cursor-pointer appearance-none font-bold"
+                <select
+                  value={state.hardware}
+                  onChange={(e) => setState(p => ({ ...p, hardware: e.target.value }))}
+                  className="w-full bg-transparent border-none p-0 text-lg font-medium focus:ring-0 text-white cursor-pointer appearance-none"
                 >
                   {Object.entries(HARDWARE_PROFILES).map(([id, { label }]) => (
                     <option key={id} value={id} className="bg-black text-sm">{label}</option>
@@ -315,63 +349,87 @@ export default function AnalyzePage() {
                 </select>
               </div>
             </div>
-          </div>
 
-          <div className="flex-1">
-            {state.mode === 'upload' ? (
-              <FileUpload onFilesAccepted={handleFilesAccepted} isLoading={state.isAnalyzing} acceptedFiles={state.files} onClear={() => setState(p => ({ ...p, files: [], contents: [], metrics: null, review: null }))} />
-            ) : (
-              <div className="space-y-6">
-                {state.scopes.map(s => (
-                  <div key={s.id} className="p-6 bg-black border-2 border-white/20 space-y-6 animate-in slide-in-from-right-4 transition-all">
-                    <div className="flex items-center justify-between border-b-2 border-white/10 pb-4">
-                      <div className="flex items-center gap-4">
-                        <Box size={16} className="text-emerald-500" />
-                        <input value={s.name} onChange={(e) => setState(p => ({ ...p, scopes: p.scopes.map(sc => sc.id === s.id ? { ...sc, name: e.target.value } : sc) }))} className="bg-transparent border-none p-0 text-xs uppercase tracking-widest text-white focus:ring-0 w-full" />
-                      </div>
-                      <button onClick={() => removeScope(s.id)} className="p-2 hover:bg-red-900/20 text-gray-500 hover:text-red-500 transition-colors border border-transparent hover:border-red-500"><X size={14} /></button>
-                    </div>
-                    <textarea value={s.code} onChange={(e) => updateScope(s.id, e.target.value)} placeholder="// Write feature logic..." className="w-full h-40 bg-white/5 border-2 border-transparent focus:border-emerald-500 p-4 text-xs text-emerald-400 placeholder-gray-700 resize-none custom-scrollbar outline-none" />
-                    {s.metrics && (
-                      <div className="flex items-center justify-between px-2 pt-2">
-                        <div className="flex gap-6">
-                          <div className="flex items-center gap-2"><Zap size={10} className="text-amber-500" /><span className="text-[10px] text-gray-400">{s.metrics.estimatedEnergy.toFixed(4)} KWH</span></div>
-                          <div className="flex items-center gap-2"><Activity size={10} className="text-blue-500" /><span className="text-[10px] text-gray-400">O({s.metrics.complexity.toFixed(1)})</span></div>
-                        </div>
-                        <span className="text-[9px] text-emerald-500 uppercase">SYNCED</span>
-                      </div>
-                    )}
+            {/* Main Input Area */}
+            <div className="content-area">
+              {state.mode === 'upload' ? (
+                <div className="bg-[#111] rounded-[2.5rem] border border-white/5 p-2 overflow-hidden">
+                  <div className="rounded-4xl border border-dashed border-white/10 bg-black/50 overflow-hidden">
+                    <FileUpload onFilesAccepted={handleFilesAccepted} isLoading={state.isAnalyzing} acceptedFiles={state.files} onClear={() => setState(p => ({ ...p, files: [], contents: [], metrics: null, review: null }))} />
                   </div>
-                ))}
-                <button onClick={addScope} className="w-full p-6 border-2 border-dashed border-white/20 hover:border-emerald-500/50 hover:bg-emerald-900/10 transition-all flex items-center justify-center gap-4 text-gray-500 hover:text-emerald-400 text-xs uppercase tracking-widest">
-                  <Plus size={16} /> ADD_NEW_SCOPE
-                </button>
-              </div>
-            )}
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {state.scopes.map(s => (
+                    <div key={s.id} className="p-8 bg-[#111] border border-white/5 rounded-[2.5rem] space-y-6 hover:border-white/10 transition-colors shadow-2xl shadow-black/50">
+                      <div className="flex items-center justify-between">
+                        <input
+                          value={s.name}
+                          onChange={(e) => setState(p => ({ ...p, scopes: p.scopes.map(sc => sc.id === s.id ? { ...sc, name: e.target.value } : sc) }))}
+                          className="bg-transparent border-none p-0 text-lg font-medium text-white focus:ring-0 w-full placeholder:text-gray-600"
+                          placeholder="Scope Name"
+                        />
+                        <button onClick={() => removeScope(s.id)} className="p-2 bg-white/5 rounded-full text-gray-400 hover:text-white hover:bg-white/10 transition-colors">
+                          <X size={16} />
+                        </button>
+                      </div>
+                      <textarea
+                        value={s.code}
+                        onChange={(e) => updateScope(s.id, e.target.value)}
+                        placeholder="// Write your logic here..."
+                        className="w-full h-48 bg-black/50 rounded-2xl border border-white/5 focus:border-white/20 p-6 text-sm text-gray-300 placeholder-gray-700 resize-none font-mono outline-none transition-colors"
+                      />
+                      {s.metrics && (
+                        <div className="flex items-center gap-6 pt-2 border-t border-white/5">
+                          <div className="flex items-center gap-2"><Zap size={14} className="text-amber-400/80" /><span className="text-sm text-gray-400">{s.metrics.estimatedEnergy.toFixed(4)} kWh</span></div>
+                          <div className="flex items-center gap-2"><Activity size={14} className="text-blue-400/80" /><span className="text-sm text-gray-400">Complexity O({s.metrics.complexity.toFixed(1)})</span></div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  <button onClick={addScope} className="w-full py-6 rounded-full border border-dashed border-white/10 hover:border-white/20 hover:bg-white/5 transition-all flex items-center justify-center gap-2 text-gray-400 hover:text-white text-sm font-medium">
+                    <Plus size={18} /> Add Scope
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
+        {/* Results Section */}
         {state.metrics && (
-          <div className="space-y-20 animate-in fade-in slide-in-from-bottom-10 duration-500">
-            <div className="flex flex-col lg:flex-row items-center justify-between gap-12 py-12 border-y-2 border-white/10 border-dashed">
-              <div className="space-y-4 text-center lg:text-left">
-                <h2 className="text-4xl text-white uppercase font-bold">SYNTHESIS_LIVE</h2>
-                <div className="flex flex-wrap items-center justify-center lg:justify-start gap-6">
-                  <div className="flex items-center gap-2 px-3 py-1 bg-emerald-900/20 border-2 border-emerald-500/20 text-[10px] text-emerald-500 uppercase tracking-widest">
-                    <ShieldCheck size={12} className="animate-pulse" /> PROTOCOL_SAFE
-                  </div>
-                  <p className="text-[10px] text-gray-500 uppercase tracking-widest">GRID_LOAD: {state.metrics.gridIntensity} gCO2e</p>
-                </div>
+          <div className="space-y-16 animate-in fade-in slide-in-from-bottom-8 duration-700">
+            <div className="flex flex-col lg:flex-row items-center justify-between gap-12 py-12 border-t border-white/10">
+              <div className="space-y-2 text-center lg:text-left">
+                <h2 className="text-3xl font-medium text-white">Analysis Complete</h2>
+                <p className="text-gray-500">Grid Intensity: <span className="text-white">{state.metrics.gridIntensity} gCO2e</span></p>
               </div>
-              <div className="flex flex-wrap items-center justify-center gap-4">
-                <button onClick={() => setState(p => ({ ...p, runResults: [], isRunning: false, metrics: null, review: null }))} className="p-4 border-2 border-white/20 hover:bg-white/10 transition-colors"><RotateCcw size={20} className="text-gray-400" /></button>
-                <button onClick={commitToLedger} disabled={state.isSaving || state.isSaved} className={cn("flex items-center gap-4 px-8 py-4 uppercase text-xs transition-all border-2", state.isSaved ? "bg-emerald-500 text-black border-emerald-500 cursor-default" : "bg-black text-white border-white hover:bg-white hover:text-black")}>
-                  {state.isSaving ? <Loader2 size={16} className="animate-spin" /> : state.isSaved ? <CheckCircle2 size={16} /> : <Save size={16} />}
-                  {state.isSaved ? "SAVED_TO_VAULT" : "COMMIT_AUDIT"}
+              <div className="flex gap-4">
+                <button
+                  onClick={() => setState(p => ({ ...p, runResults: [], isRunning: false, metrics: null, review: null }))}
+                  className="p-4 rounded-full border border-white/10 hover:bg-white/5 text-gray-400 hover:text-white transition-colors"
+                >
+                  <RotateCcw size={20} />
+                </button>
+                <button
+                  onClick={commitToLedger}
+                  disabled={state.isSaving || state.isSaved}
+                  className={cn(
+                    "flex items-center gap-3 px-8 py-4 rounded-full text-sm font-medium transition-all shadow-lg",
+                    state.isSaved
+                      ? "bg-emerald-500 text-white cursor-default"
+                      : "bg-white text-black hover:bg-gray-200 active:scale-95"
+                  )}
+                >
+                  {state.isSaving ? <Loader2 size={18} className="animate-spin" /> : state.isSaved ? <CheckCircle2 size={18} /> : <Save size={18} />}
+                  {state.isSaved ? "Saved to Vault" : "Commit Audit"}
                 </button>
                 {state.isSaved && (
-                  <button onClick={() => navigator.clipboard.writeText(`![CO2DE Grade](${window.location.origin}/api/badge/${state.lastSavedId})`).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000) })} className="flex items-center gap-4 px-8 py-4 bg-emerald-900/20 border-2 border-emerald-500/20 text-emerald-500 uppercase text-xs transition-all">
-                    {copied ? <Check size={16} /> : <Copy size={16} />} {copied ? "COPIED" : "BADGE"}
+                  <button
+                    onClick={() => navigator.clipboard.writeText(`![CO2DE Grade](${window.location.origin}/api/badge/${state.lastSavedId})`).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000) })}
+                    className="flex items-center gap-3 px-8 py-4 rounded-full bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-all text-sm font-medium"
+                  >
+                    {copied ? <Check size={18} /> : <Copy size={18} />} {copied ? "Copied" : "Copy Badge"}
                   </button>
                 )}
               </div>
@@ -379,25 +437,27 @@ export default function AnalyzePage() {
 
             <MetricsDisplay metrics={state.metrics} />
 
-            <div className="grid lg:grid-cols-2 gap-16">
-              <div className="space-y-16">
-                <div className="p-8 border-2 border-white/20 bg-black relative overflow-hidden flex flex-col justify-center min-h-[400px]">
-                  <h3 className="text-xs mb-12 text-gray-500 uppercase tracking-widest text-center lg:text-left">OPERATIONAL_EFFICIENCY</h3>
+            <div className="grid lg:grid-cols-2 gap-12">
+              <div className="space-y-12">
+                <div className="p-10 rounded-[3rem] bg-[#111] border border-white/5">
+                  <h3 className="text-lg font-medium text-white mb-8">Efficiency Score</h3>
                   <EnergyScoreChart score={state.review?.score || Math.max(1, 10 - Math.floor(state.metrics.complexity * 1.5))} />
 
                   {state.mode === 'architect' && (
-                    <div className="mt-16 space-y-8">
-                      <div className="flex items-center justify-between border-b-2 border-white/10 pb-2">
-                        <span className="text-[10px] text-gray-500 uppercase">SCOPE_IMPACT_DISTRIBUTION</span>
-                        <BarChart3 size={14} className="text-gray-600" />
-                      </div>
+                    <div className="mt-12 space-y-6">
+                      <p className="text-sm text-gray-500 font-medium">Impact Distribution</p>
                       <div className="space-y-4">
                         {state.scopes.map(s => {
                           const p = Math.min(100, (s.metrics?.estimatedCO2 / state.metrics.estimatedCO2) * 100) || 0;
                           return (
                             <div key={s.id} className="space-y-2">
-                              <div className="flex items-center justify-between text-[10px] uppercase"><span className="text-white">{s.name}</span><span className="text-emerald-500">{p.toFixed(1)}%</span></div>
-                              <div className="h-2 w-full bg-white/10"><div className="h-full bg-emerald-500" style={{ width: `${p}%` }} /></div>
+                              <div className="flex justify-between text-sm">
+                                <span className="text-white">{s.name}</span>
+                                <span className="text-emerald-400">{p.toFixed(1)}%</span>
+                              </div>
+                              <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
+                                <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${p}%` }} />
+                              </div>
                             </div>
                           );
                         })}
@@ -405,47 +465,81 @@ export default function AnalyzePage() {
                     </div>
                   )}
                 </div>
-
                 <GridTimeline region={state.region} />
               </div>
 
-              <div className="space-y-10">
+              <div className="space-y-8">
                 {state.mode === 'upload' && state.review ? <AIReviewCard review={state.review} /> : (
-                  <div className="p-8 border-2 border-white/10 bg-black space-y-8 text-center lg:text-left">
-                    <div className="flex items-center justify-center lg:justify-start gap-4 text-emerald-500"><Terminal size={20} /><h3 className="text-xl uppercase font-bold">ARCHITECT_REVIEW</h3></div>
-                    <p className="text-gray-500 text-sm leading-relaxed">
-                      // ENGINE STATUS: ACTIVE <br />
-                      Analyzing multiple feature scopes for cumulative carbon density.
+                  <div className="p-10 rounded-[3rem] bg-[#111] border border-white/5 text-center lg:text-left">
+                    <div className="flex items-center justify-center lg:justify-start gap-4 mb-6">
+                      <div className="p-3 bg-white/5 rounded-2xl text-emerald-400"><Terminal size={24} /></div>
+                      <h3 className="text-xl font-medium text-white">Architect Review</h3>
+                    </div>
+                    <p className="text-gray-400 leading-relaxed mb-8">
+                      The engine is actively analyzing multiple feature scopes to determine cumulative carbon density and optimize algorithmic complexity.
                     </p>
-                    <div className="grid grid-cols-1 gap-4">
-                      <div className="p-4 bg-white/5 border border-white/10 flex items-center gap-6"><div className="text-emerald-500"><ShieldCheck size={18} /></div><div className="space-y-1"><p className="text-[10px] text-gray-500 uppercase">COMPLEXITY</p><p className="text-xl text-white font-bold">O({state.metrics.complexity.toFixed(2)})</p></div></div>
-                      <div className="p-4 bg-white/5 border border-white/10 flex items-center gap-6"><div className="text-amber-500"><Zap size={18} /></div><div className="space-y-1"><p className="text-[10px] text-gray-500 uppercase">TOTAL_DRAW</p><p className="text-xl text-white font-bold">{state.metrics.estimatedEnergy.toFixed(4)} KWH</p></div></div>
+                    <div className="grid gap-4">
+                      <div className="p-5 rounded-2xl bg-white/5 flex items-center gap-4">
+                        <ShieldCheck className="text-emerald-400" size={20} />
+                        <div>
+                          <p className="text-xs text-gray-500 mb-0.5">Complexity</p>
+                          <p className="text-white font-medium">O({state.metrics.complexity.toFixed(2)})</p>
+                        </div>
+                      </div>
+                      <div className="p-5 rounded-2xl bg-white/5 flex items-center gap-4">
+                        <Zap className="text-amber-400" size={20} />
+                        <div>
+                          <p className="text-xs text-gray-500 mb-0.5">Total Draw</p>
+                          <p className="text-white font-medium">{state.metrics.estimatedEnergy.toFixed(4)} kWh</p>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}
 
                 {state.mode === 'upload' && (
                   !state.refactored ? (
-                    <button onClick={handleRefactor} disabled={state.isRefactoring} className="w-full p-8 border-2 border-emerald-500/50 bg-emerald-900/10 hover:bg-emerald-900/20 transition-all group flex items-center justify-between text-left relative overflow-hidden">
-                      <div className="absolute top-0 right-0 w-20 h-20 bg-emerald-500/10 blur-3xl" />
-                      <div className="space-y-2 relative z-10">
-                        <p className="text-emerald-500 text-xl uppercase font-bold">REFACTOR_MODULE</p>
-                        <p className="text-emerald-500/60 text-[10px] uppercase">AUTONOMOUS_CODE_OPT</p>
+                    <button
+                      onClick={handleRefactor}
+                      disabled={state.isRefactoring}
+                      className="w-full p-8 rounded-[2.5rem] bg-linear-to-br from-emerald-500/10 to-transparent border border-emerald-500/20 hover:border-emerald-500/40 transition-all group relative overflow-hidden text-left"
+                    >
+                      <div className="relative z-10 flex justify-between items-center">
+                        <div>
+                          <p className="text-xl text-emerald-400 font-medium mb-1">Auto-Refactor</p>
+                          <p className="text-emerald-400/60 text-sm">AI-powered code optimization</p>
+                        </div>
+                        {state.isRefactoring ? <Loader2 className="animate-spin text-emerald-400" /> : <Sparkles className="text-emerald-400 group-hover:scale-110 transition-transform" size={24} />}
                       </div>
-                      {state.isRefactoring ? <Loader2 className="animate-spin text-emerald-500" /> : <Sparkles className="text-emerald-500 group-hover:scale-110 transition-transform" size={24} />}
                     </button>
                   ) : (
-                    <div className="p-8 border-2 border-emerald-500 bg-black space-y-6 animate-in zoom-in-95 relative">
-                      <div className="flex items-center justify-between border-b-2 border-emerald-500/20 pb-4"><div className="flex items-center gap-4 text-emerald-500"><CheckCircle2 size={24} /><span className="text-lg uppercase font-bold">OPTIMIZED_RESULT</span></div><button onClick={() => setState(p => ({ ...p, refactored: null }))} className="text-[10px] text-gray-500 uppercase hover:text-white transition-colors">DISMISS</button></div>
-                      <div className="bg-black/80 p-6 text-xs text-emerald-400 overflow-x-auto border border-white/10 max-h-[400px] custom-scrollbar selection:bg-emerald-500/20"><pre><code>{state.refactored.code}</code></pre></div>
-                      <div className="space-y-4"><div className="flex items-center gap-2"><Zap size={14} className="text-emerald-500" /><span className="text-[10px] text-emerald-500 uppercase">SUMMARY</span></div><p className="text-sm text-gray-400 leading-relaxed">// {state.refactored.explanation}</p></div>
+                    <div className="p-8 rounded-[2.5rem] bg-[#111] border border-emerald-500/30 space-y-6 relative overflow-hidden">
+                      <div className="flex items-center justify-between pb-4 border-b border-white/5">
+                        <div className="flex items-center gap-3 text-emerald-400">
+                          <CheckCircle2 size={24} />
+                          <span className="text-lg font-medium">Optimized Result</span>
+                        </div>
+                        <button onClick={() => setState(p => ({ ...p, refactored: null }))} className="text-xs text-gray-500 hover:text-white transition-colors">DISMISS</button>
+                      </div>
+                      <div className="bg-black/50 rounded-2xl p-6 text-sm text-emerald-300 font-mono overflow-x-auto border border-white/5 max-h-[400px]">
+                        <pre><code>{state.refactored.code}</code></pre>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-emerald-400 text-xs font-medium uppercase tracking-widest">
+                          <Zap size={12} /> Summary
+                        </div>
+                        <p className="text-gray-400 text-sm leading-relaxed">{state.refactored.explanation}</p>
+                      </div>
                     </div>
                   )
                 )}
 
-                <Link href="/dashboard" className="w-full p-8 border-2 border-white/10 bg-black hover:bg-white hover:text-black transition-colors flex items-center justify-between group">
-                  <div className="space-y-1"><p className="text-lg uppercase font-bold transition-colors">PROTOCOL_VAULT</p><p className="text-[10px] text-gray-500 uppercase group-hover:text-black transition-colors">VIEW_HISTORICAL_LEDGER</p></div>
-                  <ArrowRight size={24} className="text-gray-500 group-hover:text-black group-hover:translate-x-2 transition-all" />
+                <Link href="/dashboard" className="w-full p-8 rounded-[2.5rem] bg-[#111] border border-white/5 hover:bg-white hover:text-black transition-all flex items-center justify-between group">
+                  <div>
+                    <p className="text-lg font-medium mb-1 group-hover:text-black">Protocol Vault</p>
+                    <p className="text-sm text-gray-500 group-hover:text-black/60">View historical ledger</p>
+                  </div>
+                  <ArrowRight size={24} className="text-gray-500 group-hover:text-black group-hover:translate-x-1 transition-transform" />
                 </Link>
               </div>
             </div>

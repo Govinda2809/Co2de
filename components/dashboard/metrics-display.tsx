@@ -22,13 +22,13 @@ export function MetricsDisplay({ metrics, className }: MetricsDisplayProps) {
   if (!metrics) return null;
 
   const projections = [
-    { label: "100K_RUNS", value: (metrics.estimatedCO2 * 100).toFixed(1), unit: "KG" },
-    { label: "1M_RUNS", value: (metrics.estimatedCO2 * 10).toFixed(1), unit: "KG" },
+    { label: "100k Runs", value: (metrics.estimatedCO2 * 100).toFixed(1), unit: "KG" },
+    { label: "1M Runs", value: (metrics.estimatedCO2 * 10).toFixed(1), unit: "KG" },
   ];
 
   const cards = [
     {
-      label: "ENERGY_VAL",
+      label: "Energy Value",
       value: metrics.estimatedEnergy.toFixed(3),
       unit: metrics.energyUnit,
       icon: Zap,
@@ -36,7 +36,7 @@ export function MetricsDisplay({ metrics, className }: MetricsDisplayProps) {
       bgColor: "bg-amber-500/10",
     },
     {
-      label: "CO2_OUTPUT",
+      label: "CO2 Output",
       value: metrics.estimatedCO2.toFixed(3),
       unit: metrics.co2Unit,
       icon: Cloud,
@@ -44,7 +44,7 @@ export function MetricsDisplay({ metrics, className }: MetricsDisplayProps) {
       bgColor: "bg-emerald-500/10",
     },
     {
-      label: "MEM_LOAD",
+      label: "Memory Load",
       value: metrics.memPressure?.toFixed(2) || "1.00",
       unit: "X",
       icon: Activity,
@@ -52,7 +52,7 @@ export function MetricsDisplay({ metrics, className }: MetricsDisplayProps) {
       bgColor: "bg-blue-500/10",
     },
     {
-      label: "BIG_O_CPLX",
+      label: "Complexity",
       value: metrics.complexity?.toFixed(2) || "—",
       unit: "IDX",
       icon: Code2,
@@ -62,22 +62,23 @@ export function MetricsDisplay({ metrics, className }: MetricsDisplayProps) {
   ];
 
   return (
-    <div className={cn("space-y-8", className)}>
+    <div className={cn("space-y-12", className)}>
       {metrics.recursionDetected && (
-        <div className="p-6 bg-red-900/10 border-2 border-red-500 pixel-border flex flex-col md:flex-row items-center justify-between gap-6 animate-pulse">
-          <div className="flex items-center gap-6">
-            <div className="p-2 bg-red-500 text-black border border-red-500 pixel-border">
+        <div className="p-8 rounded-[2rem] bg-gradient-to-r from-red-500/10 to-transparent border border-red-500/20 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-red-500" />
+          <div className="flex items-center gap-6 relative z-10">
+            <div className="p-4 rounded-full bg-red-500/10 text-red-500 border border-red-500/10">
               <AlertTriangle size={24} />
             </div>
             <div className="space-y-1">
-              <p className="font-pixel text-lg text-red-500 uppercase">RECURSION_HOTSPOT_DETECTED</p>
-              <p className="font-mono text-xs text-red-400 max-w-lg">
-                   // WARN: Deep stack invocation detected. <br />
-                   // Energy leakage probability: HIGH.
+              <p className="text-sm font-medium text-red-400 uppercase tracking-wide">Recursion Hotspot Detected</p>
+              <p className="text-lg text-white font-light">
+                Deep stack invocation detected. <br />
+                Energy leakage probability: High.
               </p>
             </div>
           </div>
-          <div className="px-4 py-2 bg-red-500 text-black font-pixel text-xs border border-red-500 pixel-border">MULTIPLIER: 1.5X</div>
+          <div className="px-5 py-2 rounded-full bg-red-500 text-white font-medium text-sm shadow-red-500/20 shadow-lg">Impact 1.5x</div>
         </div>
       )}
 
@@ -85,51 +86,54 @@ export function MetricsDisplay({ metrics, className }: MetricsDisplayProps) {
         {cards.map((card, index) => (
           <div
             key={card.label}
-            className="pixel-border border-2 border-white/10 bg-black p-6 hover:border-white hover:-translate-y-1 transition-all duration-200 group relative overflow-hidden"
+            className="rounded-[3rem] bg-[#111] border border-white/5 p-8 hover:border-white/20 transition-all duration-300 group relative overflow-hidden"
           >
-            <div className={`absolute top-0 right-0 p-2 ${card.color} opacity-20 group-hover:opacity-100 transition-opacity`}>
-              <card.icon size={40} />
+            <div className={`absolute top-0 right-0 p-6 ${card.color} opacity-0 group-hover:opacity-10 transition-opacity duration-500`}>
+              <card.icon size={80} />
             </div>
 
-            <div className={cn("inline-flex p-2 mb-4 pixel-border border transition-colors bg-transparent", card.color, "border-current")}>
-              <card.icon className="w-4 h-4" />
+            <div className={cn("inline-flex p-4 rounded-2xl mb-6 transition-colors bg-white/5", card.color)}>
+              <card.icon className="w-5 h-5" />
             </div>
-            <p className="font-pixel text-xs text-gray-500 mb-2">{card.label}</p>
+            <p className="text-sm text-gray-500 font-medium mb-1">{card.label}</p>
             <div className="flex items-baseline gap-2">
-              <span className="font-pixel text-2xl text-white block">{card.value}</span>
-              <span className="font-pixel text-[10px] text-gray-500">{card.unit}</span>
+              <span className="text-4xl text-white font-medium block tracking-tight">{card.value}</span>
+              <span className="text-xs text-gray-500 font-medium">{card.unit}</span>
             </div>
           </div>
         ))}
       </div>
 
       {/* SCALE PROJECTIONS */}
-      <div className="p-8 bg-black border-2 border-emerald-500/50 pixel-border relative overflow-hidden group">
+      <div className="p-10 rounded-[3rem] bg-[#111] border border-white/5 relative overflow-hidden group">
         <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-12">
-          <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <TrendingDown size={16} className="text-emerald-500" />
-              <h3 className="font-pixel text-sm text-emerald-500 uppercase">PREDICTIVE_SCALE_IMPACT</h3>
+          <div className="space-y-4 text-center md:text-left">
+            <div className="flex items-center justify-center md:justify-start gap-3">
+              <div className="p-2 bg-emerald-500/10 rounded-full"><TrendingDown size={18} className="text-emerald-500" /></div>
+              <h3 className="text-lg font-medium text-white">Projected Impact</h3>
             </div>
-            <p className="font-mono text-xs text-gray-400 max-w-sm">
-                 // SIMULATING_WORKLOAD_SPIKE... <br />
-              Estimating carbon tonnage at enterprise scale.
+            <p className="text-sm text-gray-500 max-w-sm leading-relaxed">
+              Based on your current metrics, here is the estimated environmental impact at enterprise scale.
             </p>
           </div>
-          <div className="flex gap-12">
+          <div className="flex gap-16 item-center">
             {projections.map((p, i) => (
               <div key={i} className="text-center md:text-right space-y-1">
-                <p className="font-mono text-[10px] text-gray-500 uppercase tracking-widest">{p.label}</p>
-                <p className="font-pixel text-3xl text-white">
-                  {p.value} <span className="text-xs text-emerald-500">{p.unit}</span>
-                </p>
+                <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">{p.label.replace('_', ' ')}</p>
+                <div className="relative inline-block">
+                  <p className="text-4xl text-white font-medium tracking-tight">
+                    {p.value}
+                  </p>
+                  <span className="absolute -top-1 -right-6 text-[10px] text-emerald-500 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded-full">{p.unit}</span>
+                </div>
               </div>
             ))}
           </div>
         </div>
+
         {/* Background Grid */}
-        <div className="absolute inset-0 pointer-events-none opacity-5"
-          style={{ backgroundImage: 'linear-gradient(#10b981 1px, transparent 1px), linear-gradient(90deg, #10b981 1px, transparent 1px)', backgroundSize: '10px 10px' }}
+        <div className="absolute inset-0 pointer-events-none opacity-[0.03]"
+          style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '40px 40px' }}
         />
       </div>
     </div>
