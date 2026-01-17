@@ -4,12 +4,13 @@ import { NextResponse } from 'next/server';
 import { AIReviewSchema } from '@/lib/schemas';
 
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+const MULEROUTER_API_KEY = process.env.MULEROUTER_API_KEY;
 
 /**
  * LARGE_CONTEXT_FREE_MODELS_V5
  * Curated list of high-context, high-performance free models on OpenRouter.
  */
-const FREE_MODELS = [
+const OPENROUTER_MODELS = [
   "deepseek/deepseek-r1-distill-llama-70b:free",
   "google/gemini-2.0-flash-lite-preview-02-05:free",
   "microsoft/phi-3-medium-128k-instruct:free",
@@ -17,14 +18,62 @@ const FREE_MODELS = [
   "google/gemini-2.0-flash-exp:free"
 ];
 
-async function callAI(code: string, systemPrompt: string, apiKey: string, model: string) {
-  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+/**
+ * MULEROUTER FALLBACK MODELS
+ * Models available on MuleRouter as fallback.
+ */
+const MULEROUTER_MODELS = [
+  "deepseek/deepseek-r1",
+  "meta-llama/llama-3.3-70b-instruct",
+  "google/gemini-2.0-flash"
+];
+
+type RouterType = 'openrouter' | 'mulerouter';
+
+interface RouterConfig {
+  baseUrl: string;
+  apiKey: string | undefined;
+  models: string[];
+  referer: string;
+  title: string;
+}
+
+const ROUTER_CONFIGS: Record<RouterType, RouterConfig> = {
+  openrouter: {
+    baseUrl: "https://openrouter.ai/api/v1/chat/completions",
+    apiKey: OPENROUTER_API_KEY,
+    models: OPENROUTER_MODELS,
+    referer: "https://co2de.dev",
+    title: "CO2DE Audit Engine v5"
+  },
+  mulerouter: {
+    baseUrl: "https://api.mulerouter.ai/v1/chat/completions",
+    apiKey: MULEROUTER_API_KEY,
+    models: MULEROUTER_MODELS,
+    referer: "https://co2de.dev",
+    title: "CO2DE Audit Engine v5 [Fallback]"
+  }
+};
+
+async function callAI(
+  code: string, 
+  systemPrompt: string, 
+  router: RouterType, 
+  model: string
+) {
+  const config = ROUTER_CONFIGS[router];
+  
+  if (!config.apiKey) {
+    throw new Error(`${router.toUpperCase()}_API_KEY is not configured.`);
+  }
+
+  const response = await fetch(config.baseUrl, {
     method: "POST",
     headers: {
-      "Authorization": `Bearer ${apiKey}`,
+      "Authorization": `Bearer ${config.apiKey}`,
       "Content-Type": "application/json",
-      "HTTP-Referer": "https://co2de.dev",
-      "X-Title": "CO2DE Audit Engine v5",
+      "HTTP-Referer": config.referer,
+      "X-Title": config.title,
     },
     body: JSON.stringify({
       model: model,
@@ -38,21 +87,49 @@ async function callAI(code: string, systemPrompt: string, apiKey: string, model:
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`AI Gateway error (${response.status}): ${errorText}`);
+    throw new Error(`${router} error (${response.status}): ${errorText}`);
   }
   
   const data = await response.json();
   const content = data.choices?.[0]?.message?.content;
   
-  if (!content) throw new Error("AI returned null response content.");
+  if (!content) throw new Error(`${router} returned null response content.`);
   
   try {
     return JSON.parse(content);
   } catch (e) {
     const jsonMatch = content.match(/\{[\s\S]*\}/);
     if (jsonMatch) return JSON.parse(jsonMatch[0]);
-    throw new Error("Failed to parse AI response as JSON.");
+    throw new Error(`Failed to parse ${router} response as JSON.`);
   }
+}
+
+async function tryRouter(
+  code: string, 
+  systemPrompt: string, 
+  router: RouterType
+): Promise<{ content: any; router: RouterType; model: string } | null> {
+  const config = ROUTER_CONFIGS[router];
+  
+  if (!config.apiKey) {
+    console.warn(`${router} API key not configured, skipping...`);
+    return null;
+  }
+
+  for (const model of config.models) {
+    try {
+      const content = await callAI(code, systemPrompt, router, model);
+      if (content) {
+        console.log(`✓ Success with ${router}/${model}`);
+        return { content, router, model };
+      }
+    } catch (e: any) {
+      console.warn(`${router}/${model} failed: ${e.message}`);
+      continue;
+    }
+  }
+  
+  return null;
 }
 
 export async function POST(request: Request) {
@@ -108,37 +185,43 @@ export async function POST(request: Request) {
       Be thorough - analyze import statements, require calls, and any external module references.`;
     }
 
-    if (!OPENROUTER_API_KEY) {
-      throw new Error("OPENROUTER_API_KEY is not configured in environment.");
+    // Check if at least one router is configured
+    if (!OPENROUTER_API_KEY && !MULEROUTER_API_KEY) {
+      throw new Error("No AI router configured. Set OPENROUTER_API_KEY or MULEROUTER_API_KEY.");
     }
 
-    let content;
-    const errors: string[] = [];
+    let result: { content: any; router: RouterType; model: string } | null = null;
 
-    for (const model of FREE_MODELS) {
-      try {
-        content = await callAI(code, systemPrompt, OPENROUTER_API_KEY, model);
-        if (content) break;
-      } catch (e: any) {
-        errors.push(`${model}: ${e.message}`);
-        console.warn(`Model ${model} failed, trying next...`);
-        continue;
-      }
+    // Try OpenRouter first (primary)
+    if (OPENROUTER_API_KEY) {
+      result = await tryRouter(code, systemPrompt, 'openrouter');
     }
 
-    if (!content) {
-      throw new Error(`All Large-Context Free Models Exhausted: ${errors.join(" | ")}`);
+    // Fallback to MuleRouter if OpenRouter failed
+    if (!result && MULEROUTER_API_KEY) {
+      console.log("⟳ OpenRouter exhausted, falling back to MuleRouter...");
+      result = await tryRouter(code, systemPrompt, 'mulerouter');
     }
+
+    if (!result) {
+      throw new Error("All AI routers exhausted. Both OpenRouter and MuleRouter failed.");
+    }
+
+    const { content, router, model } = result;
 
     if (mode === 'refactor') {
       return NextResponse.json({ 
         refactoredCode: content.refactoredCode || code, 
-        explanation: content.explanation || "Optimization complete with heuristic defaults." 
+        explanation: content.explanation || "Optimization complete with heuristic defaults.",
+        _meta: { router, model }
       });
     }
 
     const validated = AIReviewSchema.parse(content);
-    return NextResponse.json({ review: validated });
+    return NextResponse.json({ 
+      review: validated,
+      _meta: { router, model }
+    });
 
   } catch (error: any) {
     console.error("Engine failure:", error);

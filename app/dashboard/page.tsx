@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { FileCode, Clock, TrendingUp, Upload, Zap, RefreshCw, ShieldCheck, Search, Trash2, Download, Leaf, Calendar, ArrowUpRight } from "lucide-react";
-import { client, databases, DATABASE_ID, COLLECTION_ID } from "@/lib/appwrite";
+import { client, databases, DATABASE_ID, COLLECTION_ID, isAppwriteConfigured, listUserAnalyses, deleteAnalysisDocument } from "@/lib/appwrite";
 import { Query } from "appwrite";
 import { useAuth } from "@/hooks/use-auth";
 import { AnalysisItemSchema, AnalysisItem } from "@/lib/schemas";
@@ -23,15 +23,15 @@ export default function DashboardPage() {
 
   const fetchAnalyses = useCallback(async () => {
     if (!user) return;
+    if (!isAppwriteConfigured()) {
+      setError("Appwrite not configured. Check environment variables.");
+      setDataLoading(false);
+      return;
+    }
     setIsSyncing(true);
     try {
-      const queries = [
-        Query.orderDesc("createdAt"),
-        Query.limit(50),
-        Query.equal("userId", user.$id)
-      ];
-      const response = await databases.listDocuments(DATABASE_ID!, COLLECTION_ID!, queries);
-      const validatedDocs = response.documents.map(doc => {
+      const documents = await listUserAnalyses(user.$id, 50);
+      const validatedDocs = documents.map(doc => {
         try {
           return AnalysisItemSchema.parse(doc);
         } catch (e) { return null; }
@@ -39,7 +39,13 @@ export default function DashboardPage() {
       setAnalyses(validatedDocs);
       setError(null);
     } catch (err: any) {
-      setError(err.code === 400 ? "Indexing protocol missing. Contact system admin." : "Sync sequence failed.");
+      if (err.code === 404) {
+        setError("Collection not found. Check your Collection ID in environment variables.");
+      } else if (err.code === 401) {
+        setError("Authentication required. Please log in again.");
+      } else {
+        setError(err.message || "Sync sequence failed.");
+      }
     } finally {
       setDataLoading(false);
       setIsSyncing(false);
@@ -51,7 +57,7 @@ export default function DashboardPage() {
   }, [user, authLoading, fetchAnalyses]);
 
   useEffect(() => {
-    if (!user || !DATABASE_ID || !COLLECTION_ID) return;
+    if (!user || !isAppwriteConfigured()) return;
     const channel = `databases.${DATABASE_ID}.collections.${COLLECTION_ID}.documents`;
     const unsubscribe = client.subscribe(channel, (response) => {
       const payload = response.payload as any;

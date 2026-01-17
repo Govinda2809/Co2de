@@ -8,7 +8,7 @@ import { MetricsDisplay, EnergyScoreChart, AIReviewCard, GridTimeline } from "@/
 import { calculateEnergyMetrics, REGIONS, HARDWARE_PROFILES, getGridIntensity, getAIReview, getAIRefactor } from "@/lib/energy";
 import { AnalysisItemSchema, AIReview, Geolocation } from "@/lib/schemas";
 import { Sparkles, RotateCcw, Loader2, Zap, TrendingUp, BarChart3, Globe, Cpu, Terminal, CheckCircle2, FileStack, Save, Copy, Check, ShieldCheck, Box, Plus, X, Activity, ArrowRight, ArrowLeft } from "lucide-react";
-import { databases, DATABASE_ID, COLLECTION_ID, ID } from "@/lib/appwrite";
+import { createAnalysisDocument, isAppwriteConfigured } from "@/lib/appwrite";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import gsap from "gsap";
@@ -63,7 +63,7 @@ export default function AnalyzePage() {
     isSaved: false,
     lastSavedId: null,
     geolocation: null,
-    scopes: [{ id: '1', name: 'Core Service', code: '// Start architecting...\nfunction processData(input) {\n  return input.map(item => item * 2);\n}', metrics: null }]
+    scopes: [{ id: '1', name: 'New Scope', code: '', metrics: null }]
   });
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -207,7 +207,11 @@ export default function AnalyzePage() {
   const removeScope = (id: string) => state.scopes.length > 1 && setState(p => ({ ...p, scopes: p.scopes.filter(s => s.id !== id) }));
 
   const commitToLedger = async () => {
-    if (!state.metrics || !user || !DATABASE_ID || !COLLECTION_ID) return;
+    if (!state.metrics || !user) return;
+    if (!isAppwriteConfigured()) {
+      setError("Appwrite not configured. Check environment variables.");
+      return;
+    }
     setState(p => ({ ...p, isSaving: true }));
     try {
       const payload = {
@@ -233,9 +237,13 @@ export default function AnalyzePage() {
         clientCity: state.geolocation?.city,
         clientCountry: state.geolocation?.country,
         clientIp: state.geolocation?.ip,
-        engineVersion: '5.0.0-delta'
+        engineVersion: '5.0.0-delta',
+        summary: state.review?.summary,
+        dependencies: state.review?.dependencies,
+        hotspots: state.review?.hotspots,
+        securityNotes: state.review?.securityNotes
       };
-      const doc = await databases.createDocument(DATABASE_ID, COLLECTION_ID, ID.unique(), AnalysisItemSchema.parse(payload));
+      const doc = await createAnalysisDocument(user.$id, payload);
       setState(p => ({ ...p, isSaving: false, isSaved: true, lastSavedId: doc.$id }));
     } catch (e: any) {
       setError("Vault commit failed: " + e.message);
