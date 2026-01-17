@@ -54,24 +54,10 @@ export default function AnalyzePage() {
       // 1. Calculate Metrics (Carbon-Aware)
       const metrics = await calculateEnergyMetrics(file.size, file.name, content);
 
-<<<<<<< HEAD
+
       // 2. Perform Analysis (AI with Local Expert Fallback)
       const { getAIReview } = await import("@/lib/energy");
       const review = await getAIReview(content, metrics);
-=======
-      // Attempt real AI analysis
-      let review;
-      try {
-        const { getAIReview } = await import("@/lib/energy");
-        review = await getAIReview(content);
-      } catch (e) {
-        console.warn("AI Analysis failed", e);
-        // If AI fails, we can't provide a review without dummy data.
-        // We'll throw to let the error handler catch it, OR provide a "N/A" review.
-        // Given "remove all dummy data", failing or N/A is appropriate.
-        throw new Error("AI Analysis unavailable and dummy data is disabled.");
-      }
->>>>>>> 3463eb9686023a0f677e9153a3eb1d7843e991f8
 
       // 2. Data Validation with Zod (Enforcement)
       const rawData = {
