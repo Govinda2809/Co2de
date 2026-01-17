@@ -5,7 +5,23 @@ import * as walk from 'acorn-walk';
 // Avg Energy Multiplier: Roughly 0.1Wh per 1k lines/complexity unit
 const ENERGY_MULTIPLIER = 0.0001;
 
-// Language specific energy intensity factor (Relative to JS = 1.0)
+// REGIONAL PUE (Power Usage Effectiveness)
+// Lower is better. 1.1 = Highly efficient (Google/Microsoft), 1.6 = Standard
+export const REGIONS = {
+  "north-america": { label: "North America (PUE 1.15)", factor: 1.15, intensity: 450 },
+  "europe": { label: "Europe (PUE 1.12)", factor: 1.12, intensity: 320 },
+  "asia": { label: "Asia (PUE 1.35)", factor: 1.35, intensity: 580 },
+  "australia": { label: "Australia (PUE 1.40)", factor: 1.4, intensity: 620 },
+  "nordics": { label: "Nordics (PUE 1.08)", factor: 1.08, intensity: 120 },
+};
+
+// HARDWARE PROFILES (Energy Draw per instruction base)
+export const HARDWARE_PROFILES = {
+  "mobile": { label: "Mobile (ARM)", factor: 0.4 },
+  "laptop": { label: "Workstation", factor: 1.0 },
+  "server": { label: "Enterprise Server (HPC)", factor: 2.5 },
+};
+
 const LANGUAGE_MULTIPLIERS: Record<string, number> = {
   "js": 1.0,
   "ts": 1.1,
@@ -21,58 +37,46 @@ export function detectLanguage(fileName: string): string {
   return LANGUAGE_MULTIPLIERS[ext] ? ext : "js";
 }
 
-export async function getGridIntensity(): Promise<number> {
-  const intensities = [250, 430, 180, 520, 310];
+export async function getGridIntensity(region: string = "europe"): Promise<number> {
+  const base = (REGIONS as any)[region]?.intensity || 320;
   const currentHour = new Date().getHours();
-  const intensityFactor = currentHour > 22 || currentHour < 6 ? 0.7 : 1.1;
-  return Math.round(intensities[currentHour % intensities.length] * intensityFactor);
+  // Simulate peak/off-peak logic
+  const intensityFactor = currentHour > 22 || currentHour < 6 ? 0.75 : 1.15;
+  return Math.round(base * intensityFactor);
 }
 
-/**
- * Advanced AST Complexity Parsing (JS/TS specific)
- * Detects Big O patterns, deep nesting, and expensive constructs
- */
 function calculateASTComplexity(content: string, lang: string): number {
   let complexity = 1.0;
-  
-  if (lang !== 'js' && lang !== 'ts') {
-    return estimateComplexityRegex(content);
-  }
+  if (lang !== 'js' && lang !== 'ts') return estimateComplexityRegex(content);
 
   try {
     const tree = acorn.parse(content, { ecmaVersion: 'latest', sourceType: 'module' });
-    let maxDepth = 0;
     let loopCount = 0;
-    let bigOFactor = 0;
+    let bigOfactor = 0;
 
     walk.simple(tree, {
       ForStatement() { loopCount++; },
       WhileStatement() { loopCount++; },
       DoWhileStatement() { loopCount++; },
-      // Check for nested loops (Simple Big O heuristic)
       FunctionDeclaration(node: any) {
-        let internalLoops = 0;
+        let nested = 0;
         walk.simple(node.body, {
-          ForStatement() { internalLoops++; },
-          WhileStatement() { internalLoops++; },
+          ForStatement() { nested++; },
+          WhileStatement() { nested++; },
         });
-        if (internalLoops > 1) bigOFactor += 0.5; // Potential squared complexity
+        if (nested > 1) bigOfactor += 0.8;
       },
-      // Call expression for .map, .filter etc
       CallExpression(node: any) {
         if (node.callee.property && ['map', 'filter', 'forEach', 'reduce'].includes(node.callee.property.name)) {
           loopCount += 0.5;
         }
       }
     });
-
-    complexity += (loopCount * 0.1) + bigOFactor;
+    complexity += (loopCount * 0.15) + bigOfactor;
   } catch (e) {
-    // Fallback if AST parsing fails
     return estimateComplexityRegex(content);
   }
-
-  return Math.min(complexity, 5.0); // Capped at 5.0
+  return Math.min(complexity, 5.0);
 }
 
 function estimateComplexityRegex(content: string): number {
@@ -86,68 +90,36 @@ function estimateComplexityRegex(content: string): number {
   return Math.min(complexity, 3.0);
 }
 
-/**
- * Deterministic Heuristic Engine
- * Generates technical insights locally without AI
- */
 export function getDeterministicReview(code: string, metrics: any): AIReview {
-  const lang = metrics.language;
-  const lineCount = metrics.lineCount;
-  const hasLoops = /\b(for|while|map|forEach)\b/.test(code);
-  const hasLargePayload = code.length > 50000;
-  
-  let score = 10 - Math.floor(metrics.complexity * 2);
-  if (lang === 'py') score -= 1;
-  if (lineCount > 500) score -= 1;
-  score = Math.max(Math.min(score, 10), 1);
-
-  const insights: string[] = [];
-  const optimizations: string[] = [];
-
-  if (metrics.complexity > 2.5) {
-    insights.push(`High computational density detected via Big-O analysis.`);
-    optimizations.push(`Consider memoization or algorithmic optimization to reduce time complexity.`);
-  }
-
-  if (lang === 'js' || lang === 'ts') {
-    if (code.includes('var ')) {
-      insights.push(`Legacy 'var' declarations detected.`);
-      optimizations.push(`Replace 'var' with 'let/const' for better optimization by the V8 JIT compiler.`);
-    }
-  }
-
-  if (hasLoops && lineCount > 100) {
-    insights.push(`Sub-optimal iteration detected in a large codebase.`);
-    optimizations.push(`Combine adjacent loops or use Lazy evaluation patterns to minimize passes.`);
-  }
-
-  if (hasLargePayload) {
-    insights.push(`Detected large code volume which increases bundle parsing energy.`);
-    optimizations.push(`Implement dynamic code-splitting and tree-shaking.`);
-  }
-
-  // Final assembly
+  const score = Math.max(1, 10 - Math.floor(metrics.complexity * 2));
   return {
     score,
-    bottleneck: insights[0] || "General computational overhead consistent with language baseline.",
-    optimization: optimizations[0] || "Standard refactoring to follow idiomatic efficiency patterns.",
-    improvement: `${Math.round(metrics.complexity * 5)}-15% reduction possible through targeted refactoring.`
+    bottleneck: metrics.complexity > 2 ? "High time complexity detected via AST parsing." : "Standard execution overhead.",
+    optimization: metrics.complexity > 2 ? "Refactor nested loops into O(1) lookups." : "Optimize variable scoping.",
+    improvement: `${Math.round(metrics.complexity * 5)}% Energy reduction possible.`
   };
 }
 
-export async function calculateEnergyMetrics(fileSize: number, fileName: string, content?: string) {
+export async function calculateEnergyMetrics(
+  fileSize: number, 
+  fileName: string, 
+  content?: string,
+  region: string = "europe",
+  hardware: string = "laptop"
+) {
   const lineCount = content ? content.split('\n').length : Math.ceil(fileSize / 50);
   const lang = detectLanguage(fileName);
   const complexity = content ? calculateASTComplexity(content, lang) : 1;
   const langMultiplier = LANGUAGE_MULTIPLIERS[lang] || 1.0;
   
-  // Dependency footprint factor (Simulated - would scan package.json in real impl)
-  const depFactor = content?.includes('import') || content?.includes('require') ? 1.2 : 1.0;
+  const regionData = (REGIONS as any)[region];
+  const hardwareData = (HARDWARE_PROFILES as any)[hardware];
 
   const baseEnergy = (fileSize / 1024) * ENERGY_MULTIPLIER;
-  const adjustedEnergy = baseEnergy * complexity * langMultiplier * depFactor * (1 + lineCount / 1000);
+  // Final Adjusted Energy considering Hardware and Datacenter Efficiency (PUE)
+  const adjustedEnergy = baseEnergy * complexity * langMultiplier * hardwareData.factor * regionData.factor * (1 + lineCount / 1000);
   
-  const gridIntensity = await getGridIntensity(); 
+  const gridIntensity = await getGridIntensity(region); 
   const estimatedCO2 = adjustedEnergy * gridIntensity;
   
   return {
@@ -167,14 +139,29 @@ export async function getAIReview(code: string, metrics?: any): Promise<AIReview
     const response = await fetch('/api/analyze', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code }),
+      body: JSON.stringify({ code, mode: 'analyze' }),
     });
-    
-    if (!response.ok) throw new Error('AI API unreachable');
+    if (!response.ok) throw new Error();
     const data = await response.json();
     return data.review;
   } catch (e) {
-    console.warn("Falling back to Deterministic Heuristic Engine:", e);
     return getDeterministicReview(code, metrics || { complexity: 1, language: 'js', lineCount: code.split('\n').length });
+  }
+}
+
+export async function getAIRefactor(code: string): Promise<{ refactoredCode: string; explanation: string }> {
+  try {
+    const response = await fetch('/api/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code, mode: 'refactor' }),
+    });
+    if (!response.ok) throw new Error();
+    return await response.json();
+  } catch (e) {
+    return { 
+      refactoredCode: code, 
+      explanation: "Self-correction algorithm failed. Please optimize manually by reducing loop depth." 
+    };
   }
 }
