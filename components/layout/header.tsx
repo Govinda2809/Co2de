@@ -104,7 +104,11 @@ export function Header() {
         <nav
           ref={navRef}
           onMouseLeave={handleNavMouseLeave}
+<<<<<<< HEAD
           className="pointer-events-auto flex items-center gap-1 p-1.5 rounded-full bg-white/[0.03] backdrop-blur-3xl border border-white/10 shadow-2xl relative overflow-hidden"
+=======
+          className="pointer-events-auto hidden md:flex items-center gap-1 p-1.5 rounded-full bg-white/5 backdrop-blur-3xl border border-white/10 shadow-2xl relative"
+>>>>>>> cc51710 (Allow user dropdown to overflow navbar)
         >
           <div
             ref={hoverHighlightRef}
@@ -127,42 +131,19 @@ export function Header() {
             </Link>
           ))}
 
-          {!authLoading && !user && (
-            <div className="flex">
-              <Link
-                href="/login"
-                onMouseEnter={handleMouseEnter}
-                onMouseLeave={handleMouseLeave}
-                className="relative z-10 px-6 py-2.5 text-[10px] font-bold tracking-[0.2em] text-gray-500 transition-colors uppercase hover:text-white"
-              >
-                LOGIN
-              </Link>
-            </div>
-          )}
+          {/* GitHub Icon */}
+          <a
+            href="https://github.com/Govinda2809/Co2de"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="View on GitHub"
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+            className="relative z-10 flex items-center justify-center px-3 py-2.5 text-gray-400 transition-colors hover:text-white"
+          >
+            <Github className="w-5 h-5" />
+          </a>
 
-<<<<<<< HEAD
-          {user && (
-            <div className="relative z-10">
-              <button
-                onClick={() => setShowUserMenu(!showUserMenu)}
-                onMouseEnter={handleMouseEnter}
-                onMouseLeave={handleMouseLeave}
-                className="flex items-center gap-2 px-6 py-2.5 text-[10px] font-bold tracking-[0.2em] text-emerald-500 uppercase transition-colors hover:text-emerald-400"
-              >
-                {user.name.split(' ')[0]}
-              </button>
-
-              {showUserMenu && (
-                <div className="absolute right-0 top-full mt-4 w-60 p-2 rounded-[1.5rem] border border-white/10 bg-black/80 backdrop-blur-3xl shadow-3xl animate-in fade-in zoom-in-95 duration-200">
-                  <div className="px-5 py-4 border-b border-white/5 mb-2">
-                    <p className="text-xs font-black text-white uppercase tracking-tighter">{user.name}</p>
-                    <p className="text-[10px] font-mono text-gray-500 truncate mt-1 lowercase">{user.email}</p>
-                  </div>
-                  <Link
-                    href="/dashboard"
-                    className="flex items-center gap-4 px-5 py-4 rounded-2xl text-[10px] font-bold uppercase tracking-widest text-gray-400 hover:bg-white/5 hover:text-white transition-all"
-                    onClick={() => setShowUserMenu(false)}
-=======
           {/* User Menu or Sign In */}
           {user ? (
             <div
@@ -189,45 +170,50 @@ export function Header() {
                   <Link
                     href="/dashboard"
                     className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors"
->>>>>>> 499689fa5298b70d7ac393ad928573c9e46d40bf
+                    onClick={() => setShowUserMenu(false)}
                   >
-                    <BarChart3 size={14} />
-                    LEDGER
+                    <BarChart3 className="w-4 h-4" />
+                    Dashboard
                   </Link>
                   <button
                     onClick={handleLogout}
-<<<<<<< HEAD
-                    className="flex items-center gap-4 px-5 py-4 rounded-2xl text-[10px] font-bold uppercase tracking-widest text-red-500/80 hover:bg-red-500/10 hover:text-red-400 w-full transition-all"
-=======
                     className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300 w-full transition-colors font-medium"
->>>>>>> 499689fa5298b70d7ac393ad928573c9e46d40bf
                   >
-                    <LogOut size={14} />
-                    TERMINATE_SESSION
+                    <LogOut className="w-4 h-4" />
+                    Sign Out
                   </button>
                 </div>
               )}
             </div>
+          ) : (
+            <>
+              <Link
+                href="/login"
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={handleMouseLeave}
+                className="relative z-10 px-5 py-2.5 text-xs font-semibold tracking-widest text-gray-400 transition-colors uppercase hover:text-white"
+              >
+                LOGIN
+              </Link>
+              <Link
+                href="/signup"
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={handleMouseLeave}
+                className="relative z-10 px-5 py-2.5 text-xs font-semibold tracking-widest text-gray-400 transition-colors uppercase hover:text-white"
+              >
+                SIGNUP
+              </Link>
+            </>
           )}
 
-          <a
-            href="https://github.com/Govinda2809/Co2de"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="GitHub"
-            onMouseEnter={handleMouseEnter}
-            onMouseLeave={handleMouseLeave}
-            className="relative z-10 flex items-center justify-center p-2.5 text-gray-500 hover:text-white transition-all"
-          >
-            <Github size={18} />
-          </a>
         </nav>
 
-        <div className="lg:hidden pointer-events-auto absolute right-6 top-0">
+        {/* MOBILE TOGGLE (Top Right) */}
+        <div className="md:hidden pointer-events-auto absolute right-6 top-0">
           <button
             onClick={() => setShowMobileMenu(!showMobileMenu)}
-            aria-label="Toggle Menu"
-            className="p-4 bg-white/5 backdrop-blur-3xl border border-white/10 rounded-full text-white shadow-2xl"
+            aria-label="Toggle mobile menu"
+            className="p-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-white"
           >
             {showMobileMenu ? <X size={20} /> : <Menu size={20} />}
           </button>
@@ -242,8 +228,8 @@ export function Header() {
         )}
       >
         <div className="text-center space-y-8">
-           <Link 
-            href="/" 
+          <Link
+            href="/"
             className="text-5xl font-black italic tracking-tighter text-white uppercase block"
             onClick={() => setShowMobileMenu(false)}
           >
