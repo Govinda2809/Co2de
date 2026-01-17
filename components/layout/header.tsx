@@ -173,14 +173,9 @@ export function Header() {
             href="https://github.com/Govinda2809/Co2de"
             target="_blank"
             rel="noopener noreferrer"
-<<<<<<< HEAD
-            aria-label="View on GitHub"
-            className="hidden sm:flex p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-=======
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
             className="relative z-10 flex items-center justify-center px-3 py-2.5 text-gray-400 transition-colors hover:text-white"
->>>>>>> ed33be388b505724a000fd689e5ecab0b066829d
           >
             <Github className="w-5 h-5" />
           </a>
@@ -248,12 +243,7 @@ export function Header() {
         <div className="md:hidden pointer-events-auto absolute right-6 top-0">
           <button
             onClick={() => setShowMobileMenu(!showMobileMenu)}
-<<<<<<< HEAD
-            aria-label="Toggle mobile menu"
-            className="md:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200"
-=======
             className="p-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-white"
->>>>>>> ed33be388b505724a000fd689e5ecab0b066829d
           >
             {showMobileMenu ? <X size={20} /> : <Menu size={20} />}
           </button>
