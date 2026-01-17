@@ -1,6 +1,6 @@
 "use client";
 
-import { Zap, Cloud, Activity, TrendingDown } from "lucide-react";
+import { Zap, Cloud, Activity, Code2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface MetricsDisplayProps {
@@ -11,6 +11,7 @@ interface MetricsDisplayProps {
     co2Unit: string;
     lineCount?: number;
     complexity?: number;
+    language?: string;
   } | null;
   className?: string;
 }
@@ -36,10 +37,10 @@ export function MetricsDisplay({ metrics, className }: MetricsDisplayProps) {
       bgColor: "bg-emerald-500/10",
     },
     {
-      label: "Lines of Code",
-      value: metrics.lineCount?.toString() || "—",
-      unit: "lines",
-      icon: Activity,
+      label: "Lang Detected",
+      value: metrics.language?.toUpperCase() || "JS",
+      unit: "runtime",
+      icon: Code2,
       color: "text-blue-500",
       bgColor: "bg-blue-500/10",
     },
@@ -47,7 +48,7 @@ export function MetricsDisplay({ metrics, className }: MetricsDisplayProps) {
       label: "Complexity",
       value: metrics.complexity?.toFixed(2) || "—",
       unit: "factor",
-      icon: TrendingDown,
+      icon: Activity,
       color: "text-purple-500",
       bgColor: "bg-purple-500/10",
     },
@@ -58,10 +59,10 @@ export function MetricsDisplay({ metrics, className }: MetricsDisplayProps) {
       {cards.map((card, index) => (
         <div
           key={card.label}
-          className="relative overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4"
+          className="relative overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4 hover:border-emerald-500/30 transition-colors group"
           style={{ animationDelay: `${index * 100}ms` }}
         >
-          <div className={cn("inline-flex p-2 rounded-lg mb-3", card.bgColor)}>
+          <div className={cn("inline-flex p-2 rounded-lg mb-3 group-hover:scale-110 transition-transform", card.bgColor)}>
             <card.icon className={cn("w-5 h-5", card.color)} />
           </div>
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">{card.label}</p>

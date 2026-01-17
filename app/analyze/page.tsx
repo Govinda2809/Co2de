@@ -4,16 +4,16 @@ import { useState, useCallback } from "react";
 import { FileUpload } from "@/components/upload";
 import { MetricsDisplay, EnergyScoreChart, AIReviewCard } from "@/components/dashboard";
 import { calculateEnergyMetrics, getMockedReview } from "@/lib/energy";
-import { AIReview } from "@/lib/schemas";
-import { Sparkles, RotateCcw, Loader2 } from "lucide-react";
+import { AnalysisItemSchema } from "@/lib/schemas";
+import { Sparkles, RotateCcw, Loader2, Zap } from "lucide-react";
 import { storage, databases, DATABASE_ID, COLLECTION_ID, BUCKET_ID, ID } from "@/lib/appwrite";
 import { useAuth } from "@/hooks/use-auth";
 
 interface AnalysisState {
   file: File | null;
   content: string;
-  metrics: ReturnType<typeof calculateEnergyMetrics> | null;
-  review: AIReview | null;
+  metrics: any | null;
+  review: any | null;
   isAnalyzing: boolean;
 }
 
@@ -33,37 +33,41 @@ export default function AnalyzePage() {
     setError(null);
 
     try {
-      // 1. Calculate Metrics
-      const metrics = calculateEnergyMetrics(file.size, content);
+      // 1. Calculate Metrics (Carbon-Aware)
+      const metrics = await calculateEnergyMetrics(file.size, content);
       const review = getMockedReview(content);
 
-      // 2. Upload to Appwrite (if configured)
+      // 2. Data Validation with Zod (Enforcement)
+      const rawData = {
+        fileName: file.name,
+        fileSize: file.size,
+        fileId: "placeholder", // will update after upload
+        estimatedEnergy: metrics.estimatedEnergy,
+        estimatedCO2: metrics.estimatedCO2,
+        score: review.score,
+        bottleneck: review.bottleneck,
+        optimization: review.optimization,
+        improvement: review.improvement,
+        createdAt: new Date().toISOString(),
+        userId: user?.$id,
+      };
+
+      const validatedData = AnalysisItemSchema.parse(rawData);
+
+      // 3. Upload to Appwrite
       if (DATABASE_ID && COLLECTION_ID && BUCKET_ID) {
         try {
           // Upload file to storage
           const uploadedFile = await storage.createFile(BUCKET_ID, ID.unique(), file);
           
+          // Update validated data with real fileId
+          validatedData.fileId = uploadedFile.$id;
+          
           // Save result to database
-          const data: any = {
-            fileName: file.name,
-            fileSize: file.size,
-            fileId: uploadedFile.$id,
-            estimatedEnergy: metrics.estimatedEnergy,
-            estimatedCO2: metrics.estimatedCO2,
-            score: review.score,
-            bottleneck: review.bottleneck,
-            optimization: review.optimization,
-            improvement: review.improvement,
-            createdAt: new Date().toISOString(),
-          };
-
-          if (user) {
-            data.userId = user.$id;
-          }
-
-          await databases.createDocument(DATABASE_ID, COLLECTION_ID, ID.unique(), data);
+          await databases.createDocument(DATABASE_ID, COLLECTION_ID, ID.unique(), validatedData);
         } catch (dbError) {
-          console.error("Appwrite storage/db error:", dbError);
+          console.error("Appwrite save failed:", dbError);
+          // Still show results locally even if save fails
         }
       }
 
@@ -74,7 +78,8 @@ export default function AnalyzePage() {
         isAnalyzing: false,
       }));
     } catch (err) {
-      setError("Failed to analyze file. Please try again.");
+      console.error("Analysis failed:", err);
+      setError("Failed to analyze file. Please ensure it is a valid text-based code file.");
       setState((prev) => ({ ...prev, isAnalyzing: false }));
     }
   }, [user]);
@@ -125,6 +130,10 @@ export default function AnalyzePage() {
                     Analysis Results
                   </h2>
                   <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-xs font-medium text-amber-700">
+                      <Zap className="w-3.5 h-3.5" />
+                      Carbon Intensity: {state.metrics.gridIntensity} gCO2/kWh
+                    </div>
                     <button
                       onClick={handleClear}
                       className="flex items-center gap-2 px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
@@ -153,10 +162,11 @@ export default function AnalyzePage() {
 
                 <div className="p-6 rounded-2xl bg-emerald-500/5 border border-emerald-500/20">
                   <h3 className="font-semibold mb-2 text-emerald-700 dark:text-emerald-400 font-heading">
-                    💡 Quick Tip
+                    💡 Carbon-Aware Tip
                   </h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Your analysis has been saved to the dashboard. You can access it anytime to track improvements.
+                    Your current grid intensity is <span className="font-bold">{state.metrics.gridIntensity} gCO2/kWh</span>. 
+                    Running intensive operations when this value is lower (e.g., during high renewable output) significantly reduces your carbon footprint.
                   </p>
                 </div>
               </div>

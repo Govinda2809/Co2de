@@ -10,12 +10,12 @@ import { useGSAP } from "@gsap/react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ScrollToPlugin } from "gsap/ScrollToPlugin";
 
+import { useAuth } from "@/hooks/use-auth";
+
 // Register GSAP plugins
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger, ScrollToPlugin, useGSAP);
 }
-
-import { useAuth } from "@/hooks/use-auth";
 
 const navItems = [
   { href: "/", label: "Home", icon: Leaf },
@@ -30,7 +30,13 @@ export function Header() {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
 
-<<<<<<< HEAD
+  // GSAP Refs
+  const headerRef = useRef<HTMLHeaderElement>(null);
+  const navContainerRef = useRef<HTMLDivElement>(null);
+  const indicatorRef = useRef<HTMLDivElement>(null);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
+  const navLinksRef = useRef<(HTMLAnchorElement | null)[]>([]);
+
   const handleLogout = async () => {
     try {
       await logout();
@@ -39,23 +45,7 @@ export function Header() {
     } catch (error) {
       console.error("Logout failed:", error);
     }
-=======
-  // GSAP Refs
-  const headerRef = useRef<HTMLHeaderElement>(null);
-  const navContainerRef = useRef<HTMLDivElement>(null);
-  const indicatorRef = useRef<HTMLDivElement>(null);
-  const mobileMenuRef = useRef<HTMLDivElement>(null);
-  const navLinksRef = useRef<(HTMLAnchorElement | null)[]>([]);
-
-  // Load User Data
-  useEffect(() => {
-    const stored = localStorage.getItem("co2de_user");
-    if (stored) {
-      try {
-        setUser(JSON.parse(stored));
-      } catch { }
-    }
-  }, []);
+  };
 
   // --- GSAP IMPLEMENTATION ---
 
@@ -71,11 +61,10 @@ export function Header() {
 
     // 2. Scroll Effect (Sticky Header Scaling)
     ScrollTrigger.create({
-      trigger: document.body,
+      trigger: typeof document !== 'undefined' ? document.body : null,
       start: "top top",
       end: "+=100",
       onUpdate: (self) => {
-        // Shrink header and add blur/background on scroll
         const progress = self.progress;
         if (progress > 0.05) {
           gsap.to(headerRef.current, {
@@ -88,8 +77,8 @@ export function Header() {
           });
         } else {
           gsap.to(headerRef.current, {
-            height: 80, // Original height
-            backgroundColor: "rgba(255, 255, 255, 0.8)", // slightly simpler
+            height: 80,
+            backgroundColor: "rgba(255, 255, 255, 0.8)",
             backdropFilter: "blur(0px)",
             borderBottomColor: "transparent",
             duration: 0.3,
@@ -103,16 +92,13 @@ export function Header() {
 
 
   // 3. Indicator Animation Logic
-  // We run this in a separate effect that depends on pathname changes
   useGSAP(() => {
     const activeIndex = navItems.findIndex(item => item.href === pathname);
     const activeLink = navLinksRef.current[activeIndex];
 
     if (activeLink && indicatorRef.current && navContainerRef.current) {
-      // Calculate position relative to container
       const navRect = navContainerRef.current.getBoundingClientRect();
       const linkRect = activeLink.getBoundingClientRect();
-
       const relativeLeft = linkRect.left - navRect.left;
 
       gsap.to(indicatorRef.current, {
@@ -123,10 +109,9 @@ export function Header() {
         ease: "elastic.out(1, 0.75)"
       });
     } else {
-      // If no active link (e.g. 404), maybe hide indicator?
       gsap.to(indicatorRef.current, { opacity: 0, duration: 0.3 });
     }
-  }, [pathname]); // Re-run when pathname changes
+  }, [pathname]);
 
 
   // 4. Hover Effects (Interactive Indicator)
@@ -148,7 +133,6 @@ export function Header() {
   };
 
   const handleMouseLeave = () => {
-    // Return to active link
     const activeIndex = navItems.findIndex(item => item.href === pathname);
     const activeLink = navLinksRef.current[activeIndex];
 
@@ -177,7 +161,6 @@ export function Header() {
         duration: 0.4,
         ease: "power3.out"
       });
-      // Stagger children
       gsap.fromTo(".mobile-nav-item",
         { y: 20, opacity: 0 },
         { y: 0, opacity: 1, duration: 0.3, stagger: 0.1, delay: 0.1 }
@@ -192,22 +175,12 @@ export function Header() {
     }
   }, [showMobileMenu]);
 
-
-  const handleLogout = () => {
-    localStorage.removeItem("co2de_user");
-    setUser(null);
-    setShowUserMenu(false);
-    window.location.href = "/";
->>>>>>> 91a6e3508240b2104cb2fec0aae4a1d1f5d5d15f
-  };
-
   return (
     <header
       ref={headerRef}
       className="sticky top-0 z-50 w-full h-[80px] border-b border-transparent bg-white/80 dark:bg-gray-950/80 backdrop-blur-md transition-all will-change-transform"
     >
       <div className="container mx-auto flex h-full items-center justify-between px-4">
-        {/* Logo */}
         <Link href="/" className="flex items-center gap-2 group z-50">
           <div className="relative">
             <div className="absolute inset-0 bg-emerald-500 blur-lg opacity-50 group-hover:opacity-75 transition-opacity" />
@@ -220,9 +193,7 @@ export function Header() {
           </span>
         </Link>
 
-        {/* Desktop Nav */}
         <div ref={navContainerRef} className="hidden md:flex items-center gap-1 relative">
-          {/* The Animated Indicator */}
           <div ref={indicatorRef} className="nav-indicator" />
 
           {navItems.map((item, index) => (
@@ -245,7 +216,6 @@ export function Header() {
           ))}
         </div>
 
-        {/* Right Side / Actions */}
         <div className="flex items-center gap-3 z-50">
           <a
             href="https://github.com/Govinda2809/Co2de"
@@ -309,7 +279,6 @@ export function Header() {
             </div>
           )}
 
-          {/* Mobile Toggle */}
           <button
             onClick={() => setShowMobileMenu(!showMobileMenu)}
             className="md:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200"
@@ -319,7 +288,6 @@ export function Header() {
         </div>
       </div>
 
-      {/* Mobile Menu Overlay */}
       <div
         ref={mobileMenuRef}
         className="mobile-menu-overlay absolute top-[80px] left-0 w-full h-[calc(100vh-80px)] bg-white dark:bg-gray-950 border-t border-gray-200 dark:border-gray-800 md:hidden flex flex-col p-6 z-40"

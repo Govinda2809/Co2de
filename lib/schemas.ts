@@ -7,15 +7,6 @@ export const FileUploadSchema = z.object({
   content: z.string().optional(),
 });
 
-export const EnergyMetricsSchema = z.object({
-  fileId: z.string(),
-  fileName: z.string(),
-  fileSize: z.number(),
-  estimatedEnergy: z.number(),
-  estimatedCO2: z.number(),
-  uploadedAt: z.string(),
-});
-
 export const AIReviewSchema = z.object({
   score: z.number().min(1).max(10),
   bottleneck: z.string(),
@@ -23,23 +14,22 @@ export const AIReviewSchema = z.object({
   improvement: z.string(),
 });
 
-export const AnalysisResultSchema = z.object({
-  id: z.string(),
-  fileId: z.string(),
-  fileName: z.string(),
-  fileSize: z.number(),
-  metrics: z.object({
-    estimatedEnergy: z.number(),
-    estimatedCO2: z.number(),
-    energyUnit: z.string(),
-    co2Unit: z.string(),
-  }),
-  review: AIReviewSchema,
-  status: z.enum(['pending', 'processing', 'completed', 'failed']),
+// Matches Appwrite Collection Structure exactly
+export const AnalysisItemSchema = z.object({
+  $id: z.string().optional(),
+  fileName: z.string().min(1),
+  fileSize: z.number().nonnegative(),
+  fileId: z.string().min(1),
+  estimatedEnergy: z.number().nonnegative(),
+  estimatedCO2: z.number().nonnegative(),
+  score: z.number().min(0).max(10),
+  bottleneck: z.string(),
+  optimization: z.string(),
+  improvement: z.string(),
   createdAt: z.string(),
+  userId: z.string().optional(),
 });
 
 export type FileUpload = z.infer<typeof FileUploadSchema>;
-export type EnergyMetrics = z.infer<typeof EnergyMetricsSchema>;
 export type AIReview = z.infer<typeof AIReviewSchema>;
-export type AnalysisResult = z.infer<typeof AnalysisResultSchema>;
+export type AnalysisItem = z.infer<typeof AnalysisItemSchema>;
