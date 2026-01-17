@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { account } from "@/lib/appwrite";
 import { Models } from "appwrite";
 import { useRouter } from "next/navigation";
@@ -11,7 +11,7 @@ interface AuthContextType {
   login: (email: string, pass: string) => Promise<void>;
   signup: (email: string, pass: string, name: string) => Promise<void>;
   logout: () => Promise<void>;
-  checkUser: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -21,37 +21,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
-  useEffect(() => {
-    checkUser();
-  }, []);
-
-  async function checkUser() {
+  const refreshUser = useCallback(async () => {
     try {
-      const session = await account.get();
-      setUser(session);
+      const activeUser = await account.get();
+      setUser(activeUser);
     } catch (error) {
       setUser(null);
     } finally {
       setIsLoading(false);
     }
-  }
+  }, []);
+
+  useEffect(() => {
+    refreshUser();
+  }, [refreshUser]);
 
   const login = async (email: string, pass: string) => {
     setIsLoading(true);
     try {
-      // Clear legacy sessions to prevent 401/409 conflicts
+      // Clean up existing sessions to prevent 401/409 overlaps
       try {
         await account.deleteSession("current");
       } catch (e) {}
-      
+
       await account.createEmailPasswordSession(email, pass);
       const currentUser = await account.get();
       setUser(currentUser);
       
-      // Force a full navigation to ensure Middleware and Server Components sync correctly
+      // Force a hard navigation to synchronize cookies with Next.js Middleware
       window.location.href = "/dashboard";
     } catch (error) {
-      console.error("Login failed:", error);
+      console.error("Auth: Login failed", error);
       throw error;
     } finally {
       setIsLoading(false);
@@ -68,7 +68,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       window.location.href = "/dashboard";
     } catch (error) {
-      console.error("Signup failed:", error);
+      console.error("Auth: Signup failed", error);
       throw error;
     } finally {
       setIsLoading(false);
@@ -80,10 +80,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await account.deleteSession("current");
       setUser(null);
-      // Nuclear reload to home
+      // Nuclear reload
       window.location.href = "/";
     } catch (error) {
-      console.error("Logout error:", error);
+      console.error("Auth: Logout cleanup", error);
       setUser(null);
       window.location.href = "/login";
     } finally {
@@ -92,7 +92,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, signup, logout, checkUser }}>
+    <AuthContext.Provider value={{ user, isLoading, login, signup, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

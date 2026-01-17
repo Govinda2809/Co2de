@@ -3,21 +3,15 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X, Github, BarChart3, LogOut } from "lucide-react";
+import { Menu, X, Github, BarChart3, LogOut, User as UserIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { useAuth } from "@/hooks/use-auth";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-
-// Register GSAP plugins
-if (typeof window !== "undefined") {
-  gsap.registerPlugin(useGSAP, ScrollTrigger);
-}
 
 export function Header() {
   const pathname = usePathname();
-  const { user, logout } = useAuth();
+  const { user, logout, isLoading: authLoading } = useAuth();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
 
@@ -27,14 +21,9 @@ export function Header() {
   const mobileMenuRef = useRef<HTMLDivElement>(null);
 
   const handleLogout = async () => {
-    try {
-      await logout();
-      setShowUserMenu(false);
-      setShowMobileMenu(false);
-      window.location.href = "/";
-    } catch (error) {
-      console.error("Logout failed:", error);
-    }
+    setShowUserMenu(false);
+    setShowMobileMenu(false);
+    await logout();
   };
 
   const getNavItems = () => {
@@ -53,21 +42,18 @@ export function Header() {
 
   const visibleNavItems = getNavItems();
 
-  // 1. Entrance Animation
   useGSAP(() => {
     gsap.from(headerRef.current, {
       y: -50,
       opacity: 0,
       duration: 1.2,
       ease: "power3.out",
-      delay: 0.5
+      delay: 0.2
     });
   }, { scope: headerRef });
 
-  // 2. Hover Highlight Logic
   const handleMouseEnter = (e: React.MouseEvent<HTMLAnchorElement | HTMLButtonElement>) => {
     if (!hoverHighlightRef.current) return;
-
     const link = e.currentTarget;
     const linkRect = link.getBoundingClientRect();
     const navRect = navRef.current?.getBoundingClientRect();
@@ -85,8 +71,6 @@ export function Header() {
         duration: 0.4,
         ease: "power2.out"
       });
-
-      // Animate text color
       gsap.to(link, { color: "#ffffff", duration: 0.2 });
     }
   };
@@ -96,36 +80,10 @@ export function Header() {
   };
 
   const handleNavMouseLeave = () => {
-    // Hide highlight when leaving the entire nav
     if (hoverHighlightRef.current) {
       gsap.to(hoverHighlightRef.current, { opacity: 0, duration: 0.3 });
     }
   }
-
-  // 3. Mobile Menu Animation
-  useGSAP(() => {
-    if (showMobileMenu) {
-      gsap.to(mobileMenuRef.current, {
-        height: "100vh",
-        opacity: 1,
-        duration: 0.5,
-        ease: "power3.inOut",
-        pointerEvents: "all"
-      });
-      gsap.fromTo(".mobile-link",
-        { y: 50, opacity: 0 },
-        { y: 0, opacity: 1, stagger: 0.1, duration: 0.5, delay: 0.2 }
-      );
-    } else {
-      gsap.to(mobileMenuRef.current, {
-        height: 0,
-        opacity: 0,
-        duration: 0.5,
-        ease: "power3.inOut",
-        pointerEvents: "none"
-      });
-    }
-  }, [showMobileMenu]);
 
   return (
     <>
@@ -133,23 +91,20 @@ export function Header() {
         ref={headerRef}
         className="fixed top-6 left-0 w-full z-50 flex justify-center pointer-events-none"
       >
-        {/* LOGO (Top Left) */}
-        <div className="pointer-events-auto absolute left-6 top-1/2 -translate-y-1/2 hidden md:block">
-          <Link href="/" className="text-xl font-bold tracking-tighter hover:opacity-70 transition-opacity text-white">
-            CO2DE
+        <div className="pointer-events-auto absolute left-6 top-1/2 -translate-y-1/2 hidden lg:block">
+          <Link href="/" className="text-xl font-black tracking-tighter text-white hover:opacity-70 transition-opacity">
+            CO2DE_
           </Link>
         </div>
 
-        {/* CAPSULE NAVBAR (Desktop) */}
         <nav
           ref={navRef}
           onMouseLeave={handleNavMouseLeave}
-          className="pointer-events-auto hidden md:flex items-center gap-1 p-1.5 rounded-full bg-white/5 backdrop-blur-3xl border border-white/10 shadow-2xl relative overflow-hidden"
+          className="pointer-events-auto flex items-center gap-1 p-1.5 rounded-full bg-white/[0.03] backdrop-blur-3xl border border-white/10 shadow-2xl relative overflow-hidden"
         >
-          {/* Hover Highlight Element */}
           <div
             ref={hoverHighlightRef}
-            className="absolute bg-white/15 rounded-full pointer-events-none opacity-0"
+            className="absolute bg-white/[0.08] rounded-full pointer-events-none opacity-0"
             style={{ height: '100%', top: 0 }}
           />
 
@@ -160,7 +115,7 @@ export function Header() {
               onMouseEnter={handleMouseEnter}
               onMouseLeave={handleMouseLeave}
               className={cn(
-                "relative z-10 px-5 py-2.5 text-xs font-semibold tracking-widest text-gray-400 transition-colors uppercase hover:text-white",
+                "relative z-10 px-6 py-2.5 text-[10px] font-bold tracking-[0.2em] text-gray-500 transition-colors uppercase hover:text-white",
                 pathname === item.href && "text-white"
               )}
             >
@@ -168,141 +123,122 @@ export function Header() {
             </Link>
           ))}
 
-          {/* GitHub Icon */}
-          <a
-            href="https://github.com/Govinda2809/Co2de"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="View on GitHub"
-            onMouseEnter={handleMouseEnter}
-            onMouseLeave={handleMouseLeave}
-            className="relative z-10 flex items-center justify-center px-3 py-2.5 text-gray-400 transition-colors hover:text-white"
-          >
-            <Github className="w-5 h-5" />
-          </a>
+          {!authLoading && !user && (
+            <div className="flex">
+              <Link
+                href="/login"
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={handleMouseLeave}
+                className="relative z-10 px-6 py-2.5 text-[10px] font-bold tracking-[0.2em] text-gray-500 transition-colors uppercase hover:text-white"
+              >
+                LOGIN
+              </Link>
+            </div>
+          )}
 
-          {/* User Menu or Sign In */}
-          {user ? (
+          {user && (
             <div className="relative z-10">
               <button
                 onClick={() => setShowUserMenu(!showUserMenu)}
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={handleMouseLeave}
-                className="flex items-center gap-2 px-4 py-2 text-xs font-semibold tracking-widest text-gray-400 uppercase transition-colors hover:text-white"
+                className="flex items-center gap-2 px-6 py-2.5 text-[10px] font-bold tracking-[0.2em] text-emerald-500 uppercase transition-colors hover:text-emerald-400"
               >
-                {user.name}
+                {user.name.split(' ')[0]}
               </button>
 
               {showUserMenu && (
-                <div className="absolute right-0 top-full mt-4 w-56 p-2 rounded-2xl border border-white/10 bg-[#0a0a0a]/90 backdrop-blur-2xl shadow-xl animate-in fade-in zoom-in-95 duration-200">
-                  <div className="px-4 py-3 border-b border-white/5 mb-2">
-                    <p className="text-sm font-medium text-white">{user.name}</p>
-                    <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                <div className="absolute right-0 top-full mt-4 w-60 p-2 rounded-[1.5rem] border border-white/10 bg-black/80 backdrop-blur-3xl shadow-3xl animate-in fade-in zoom-in-95 duration-200">
+                  <div className="px-5 py-4 border-b border-white/5 mb-2">
+                    <p className="text-xs font-black text-white uppercase tracking-tighter">{user.name}</p>
+                    <p className="text-[10px] font-mono text-gray-500 truncate mt-1 lowercase">{user.email}</p>
                   </div>
                   <Link
                     href="/dashboard"
-                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors"
+                    className="flex items-center gap-4 px-5 py-4 rounded-2xl text-[10px] font-bold uppercase tracking-widest text-gray-400 hover:bg-white/5 hover:text-white transition-all"
                     onClick={() => setShowUserMenu(false)}
                   >
-                    <BarChart3 className="w-4 h-4" />
-                    Dashboard
+                    <BarChart3 size={14} />
+                    LEDGER
                   </Link>
                   <button
                     onClick={handleLogout}
-                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300 w-full transition-colors"
+                    className="flex items-center gap-4 px-5 py-4 rounded-2xl text-[10px] font-bold uppercase tracking-widest text-red-500/80 hover:bg-red-500/10 hover:text-red-400 w-full transition-all"
                   >
-                    <LogOut className="w-4 h-4" />
-                    Sign Out
+                    <LogOut size={14} />
+                    TERMINATE_SESSION
                   </button>
                 </div>
               )}
             </div>
-          ) : (
-            <>
-              <Link
-                href="/login"
-                onMouseEnter={handleMouseEnter}
-                onMouseLeave={handleMouseLeave}
-                className="relative z-10 px-5 py-2.5 text-xs font-semibold tracking-widest text-gray-400 transition-colors uppercase hover:text-white"
-              >
-                LOGIN
-              </Link>
-              <Link
-                href="/signup"
-                onMouseEnter={handleMouseEnter}
-                onMouseLeave={handleMouseLeave}
-                className="relative z-10 px-5 py-2.5 text-xs font-semibold tracking-widest text-gray-400 transition-colors uppercase hover:text-white"
-              >
-                SIGNUP
-              </Link>
-            </>
           )}
 
+          <a
+            href="https://github.com/Govinda2809/Co2de"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="GitHub"
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+            className="relative z-10 flex items-center justify-center p-2.5 text-gray-500 hover:text-white transition-all"
+          >
+            <Github size={18} />
+          </a>
         </nav>
 
-        {/* MOBILE TOGGLE (Top Right) */}
-        <div className="md:hidden pointer-events-auto absolute right-6 top-0">
+        <div className="lg:hidden pointer-events-auto absolute right-6 top-0">
           <button
             onClick={() => setShowMobileMenu(!showMobileMenu)}
-            aria-label="Toggle mobile menu"
-            className="p-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-white"
+            aria-label="Toggle Menu"
+            className="p-4 bg-white/5 backdrop-blur-3xl border border-white/10 rounded-full text-white shadow-2xl"
           >
             {showMobileMenu ? <X size={20} /> : <Menu size={20} />}
           </button>
         </div>
       </header>
 
-      {/* MOBILE MENU OVERLAY */}
+      {/* Mobile Menu Overlay */}
       <div
-        ref={mobileMenuRef}
-        className="fixed inset-0 z-40 bg-[#0a0a0a] flex flex-col items-center justify-center pointer-events-none opacity-0"
-        style={{ height: 0 }}
+        className={cn(
+          "fixed inset-0 z-40 bg-black/95 flex flex-col items-center justify-center transition-all duration-700 ease-in-out px-6",
+          showMobileMenu ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-full pointer-events-none"
+        )}
       >
-        <Link
-          href="/"
-          onClick={() => setShowMobileMenu(false)}
-          className="mobile-link text-4xl md:text-5xl font-bold tracking-tighter text-white py-4 uppercase hover:text-gray-500 transition-colors"
-        >
-          Home
-        </Link>
-
-        {visibleNavItems.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
+        <div className="text-center space-y-8">
+           <Link 
+            href="/" 
+            className="text-5xl font-black italic tracking-tighter text-white uppercase block"
             onClick={() => setShowMobileMenu(false)}
-            className="mobile-link text-4xl md:text-5xl font-bold tracking-tighter text-white py-4 uppercase hover:text-gray-500 transition-colors"
           >
-            {item.label}
+            Home_
           </Link>
-        ))}
-
-        {user ? (
-          <button
-            onClick={handleLogout}
-            className="mobile-link text-4xl md:text-5xl font-bold tracking-tighter text-red-500 py-4 uppercase hover:text-red-400 transition-colors"
-          >
-            Logout
-          </button>
-        ) : (
-          <>
+          {visibleNavItems.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              onClick={() => setShowMobileMenu(false)}
+              className="text-5xl font-black italic tracking-tighter text-white uppercase block hover:text-emerald-500 transition-colors"
+            >
+              {item.label}
+            </Link>
+          ))}
+          {user ? (
+            <button
+              onClick={handleLogout}
+              className="text-5xl font-black italic tracking-tighter text-red-500 uppercase block"
+            >
+              Terminate_
+            </button>
+          ) : (
             <Link
               href="/login"
               onClick={() => setShowMobileMenu(false)}
-              className="mobile-link text-4xl md:text-5xl font-bold tracking-tighter text-white py-4 uppercase hover:text-gray-500 transition-colors"
+              className="text-5xl font-black italic tracking-tighter text-emerald-500 uppercase block"
             >
-              Login
+              Access_
             </Link>
-            <Link
-              href="/signup"
-              onClick={() => setShowMobileMenu(false)}
-              className="mobile-link text-4xl md:text-5xl font-bold tracking-tighter text-white py-4 uppercase hover:text-gray-500 transition-colors"
-            >
-              Signup
-            </Link>
-          </>
-        )}
-
+          )}
+        </div>
       </div>
     </>
   );
