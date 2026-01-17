@@ -4,10 +4,10 @@ import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { FileUpload } from "@/components/upload";
-import { MetricsDisplay, EnergyScoreChart, AIReviewCard, GridTimeline } from "@/components/dashboard";
+import { MetricsDisplay, EnergyScoreChart, AIReviewCard, GridTimeline, RegionalHeatmap, HardwareThermalIndex } from "@/components/dashboard";
 import { calculateEnergyMetrics, REGIONS, HARDWARE_PROFILES, getGridIntensity, getAIReview, getAIRefactor } from "@/lib/energy";
 import { AnalysisItemSchema, AIReview } from "@/lib/schemas";
-import { Sparkles, RotateCcw, Loader2, Zap, TrendingUp, BarChart3, Globe, Cpu, Terminal, CheckCircle2, FileStack, Save, Copy, Check, ShieldCheck, Rocket, ArrowRight, BrainCircuit } from "lucide-react";
+import { Sparkles, RotateCcw, Loader2, Zap, TrendingUp, BarChart3, Globe, Cpu, Terminal, CheckCircle2, FileStack, Save, Copy, Check, ShieldCheck, Rocket, ArrowRight, BrainCircuit, Activity, Eye, EyeOff } from "lucide-react";
 import { databases, DATABASE_ID, COLLECTION_ID, ID } from "@/lib/appwrite";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
@@ -32,6 +32,7 @@ interface AnalysisState {
 export default function AnalyzePage() {
   const { user, isLoading: authLoading } = useAuth();
   const router = useRouter();
+  const [expertMode, setExpertMode] = useState(false);
   const [state, setState] = useState<AnalysisState>({
     files: [],
     contents: [],
@@ -136,6 +137,7 @@ export default function AnalyzePage() {
         hardwareProfile: state.hardware,
         gridIntensity: state.metrics.gridIntensity,
         recursionDetected: state.metrics.recursionDetected,
+        optimizationDelta: state.refactored ? Math.max(0, ((state.review?.score || 0) - (state.refactored.metrics?.score || 0)) * -10) : undefined,
         language: state.metrics.language,
         engineVersion: '4.0.0-gamma'
       };

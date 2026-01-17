@@ -72,7 +72,10 @@ export default function DashboardPage() {
 
   const totalEnergy = analyses.reduce((sum, a) => sum + (a.estimatedEnergy || 0), 0);
   const totalCO2 = analyses.reduce((sum, a) => sum + (a.estimatedCO2 || 0), 0);
-  const totalSaved = analyses.reduce((sum, a) => sum + (a.optimizationDelta || 0), 0);
+  const refactoredAnalyses = analyses.filter(a => a.optimizationDelta);
+  const avgSaved = refactoredAnalyses.length > 0 
+    ? refactoredAnalyses.reduce((sum, a) => sum + (a.optimizationDelta || 0), 0) / refactoredAnalyses.length 
+    : 0;
   const avgScore = analyses.length > 0 ? analyses.reduce((sum, a) => sum + (a.score || 0), 0) / analyses.length : 0;
 
   const trendData = analyses.slice().reverse().map(a => ({
@@ -184,7 +187,7 @@ export default function DashboardPage() {
           <div className="grid grid-cols-2 lg:grid-cols-1 gap-6">
             {[
               { label: "Net_Energy", value: totalEnergy.toFixed(3), unit: "kWh", color: "text-amber-500" },
-              { label: "Carbon_Offset", value: `+${totalSaved.toFixed(0)}`, unit: "%", color: "text-emerald-500" },
+              { label: "Avg_Offset", value: `+${avgSaved.toFixed(0)}`, unit: "%", color: "text-emerald-500" },
             ].map((stat, i) => (
               <div key={i} className="p-10 rounded-[3rem] bg-white/[0.02] border border-white/5 group hover:border-emerald-500/20 transition-all relative overflow-hidden flex items-center justify-center">
                 <div className="space-y-4 relative z-10 text-center">
