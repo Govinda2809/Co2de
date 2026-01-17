@@ -124,7 +124,7 @@ export function FileUpload({ onFilesAccepted, isLoading, acceptedFiles = [], onC
     <div
       {...getRootProps()}
       className={cn(
-        "relative rounded-4xl border transition-all duration-300 cursor-pointer group overflow-hidden bg-black/40 backdrop-blur-xl p-8 max-w-2xl mx-auto",
+        "relative rounded-[2rem] border transition-all duration-300 cursor-pointer group overflow-hidden bg-black/40 backdrop-blur-xl p-8 max-w-2xl mx-auto",
         isDragActive || dragActive
           ? "border-emerald-500 bg-emerald-500/5 shadow-[0_0_40px_rgba(16,185,129,0.1)]"
           : "border-white/5 hover:border-emerald-500/50 hover:bg-white/5",
@@ -165,7 +165,7 @@ export function FileUpload({ onFilesAccepted, isLoading, acceptedFiles = [], onC
       </div>
 
       {/* Subtle Glow */}
-      <div className="absolute inset-0 bg-linear-to-br from-emerald-500/0 via-transparent to-emerald-500/0 group-hover:from-emerald-500/5 group-hover:to-emerald-500/5 transition-all duration-500 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/0 via-transparent to-emerald-500/0 group-hover:from-emerald-500/5 group-hover:to-emerald-500/5 transition-all duration-500 pointer-events-none" />
     </div>
   );
 }

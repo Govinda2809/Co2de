@@ -113,7 +113,7 @@ export function AIReviewCard({ review, className }: AIReviewCardProps) {
 
       {/* Code Summary - NEW */}
       {review.summary && (
-        <div className="p-10 rounded-[2.5rem] bg-linear-to-br from-emerald-500/5 to-transparent border border-emerald-500/10 space-y-4">
+        <div className="p-10 rounded-[2.5rem] bg-gradient-to-br from-emerald-500/5 to-transparent border border-emerald-500/10 space-y-4">
           <div className="flex items-center gap-3">
             <FileText size={18} className="text-emerald-500" />
             <p className="text-xs font-medium text-emerald-500 uppercase tracking-widest">Code Explanation</p>

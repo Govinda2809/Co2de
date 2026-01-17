@@ -168,7 +168,7 @@ export default function DashboardPage() {
               <Download size={16} />
               Export
             </button>
-            <div className="relative group overflow-hidden rounded-full border border-white/10 hover:border-white/20 transition-all bg-white/2 focus-within:bg-white/5">
+            <div className="relative group overflow-hidden rounded-full border border-white/10 hover:border-white/20 transition-all bg-white/[0.02] focus-within:bg-white/5">
               <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-white transition-colors" />
               <input
                 type="text"
@@ -197,7 +197,7 @@ export default function DashboardPage() {
         {/* Stats Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-24">
           {/* Main Chart Card */}
-          <div className="stat-card lg:col-span-2 p-8 rounded-4xl bg-[#111] border border-white/5 hover:border-white/10 transition-colors relative overflow-hidden group">
+          <div className="stat-card lg:col-span-2 p-8 rounded-[2rem] bg-[#111] border border-white/5 hover:border-white/10 transition-colors relative overflow-hidden group">
             <div className="flex items-center justify-between mb-8">
               <h3 className="text-lg font-medium text-white">Consumption</h3>
               <Zap size={18} className="text-white/40" />
@@ -211,7 +211,7 @@ export default function DashboardPage() {
             { label: "Total Energy", value: totalEnergy.toFixed(2), unit: "kWh", icon: Zap },
             { label: "Carbon Footprint", value: (totalCO2 / 1000).toFixed(2), unit: "kg", icon: Leaf },
           ].map((stat, i) => (
-            <div key={i} className="stat-card p-8 rounded-4xl bg-[#111] border border-white/5 hover:border-white/10 hover:bg-[#161616] transition-all duration-500 group relative flex flex-col justify-between">
+            <div key={i} className="stat-card p-8 rounded-[2rem] bg-[#111] border border-white/5 hover:border-white/10 hover:bg-[#161616] transition-all duration-500 group relative flex flex-col justify-between">
               <div className="flex justify-between items-start">
                 <div className="p-3 rounded-xl bg-white/5 text-white/60 group-hover:text-white group-hover:bg-white/10 transition-colors">
                   <stat.icon size={20} />
@@ -232,7 +232,7 @@ export default function DashboardPage() {
 
         {/* Secondary Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-24">
-          <div className="stat-card p-8 rounded-4xl bg-[#111] border border-white/5 hover:border-white/10 transition-colors">
+          <div className="stat-card p-8 rounded-[2rem] bg-[#111] border border-white/5 hover:border-white/10 transition-colors">
             <p className="text-sm text-gray-500 mb-2">Efficiency Score</p>
             <div className="flex items-end gap-3">
               <span className="text-5xl font-medium tracking-tight text-white">{avgScore.toFixed(1)}</span>
@@ -240,7 +240,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="stat-card p-8 rounded-4xl bg-[#111] border border-white/5 hover:border-white/10 transition-colors">
+          <div className="stat-card p-8 rounded-[2rem] bg-[#111] border border-white/5 hover:border-white/10 transition-colors">
             <p className="text-sm text-gray-500 mb-2">Offset Required</p>
             <div className="flex items-end gap-3">
               <span className="text-5xl font-medium tracking-tight text-white">{Math.ceil((totalCO2 / 1000) / 21.77 * 365)}</span>
@@ -248,7 +248,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="stat-card p-8 rounded-4xl bg-[#111] border border-white/5 hover:border-white/10 transition-colors">
+          <div className="stat-card p-8 rounded-[2rem] bg-[#111] border border-white/5 hover:border-white/10 transition-colors">
             <p className="text-sm text-gray-500 mb-2">Optimization Gain</p>
             <div className="flex items-end gap-3">
               <span className="text-5xl font-medium tracking-tight text-white">+{avgSaved.toFixed(0)}</span>

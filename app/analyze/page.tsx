@@ -354,7 +354,7 @@ export default function AnalyzePage() {
             <div className="content-area">
               {state.mode === 'upload' ? (
                 <div className="bg-[#111] rounded-[2.5rem] border border-white/5 p-2 overflow-hidden">
-                  <div className="rounded-4xl border border-dashed border-white/10 bg-black/50 overflow-hidden">
+                  <div className="rounded-[2rem] border border-dashed border-white/10 bg-black/50 overflow-hidden">
                     <FileUpload onFilesAccepted={handleFilesAccepted} isLoading={state.isAnalyzing} acceptedFiles={state.files} onClear={() => setState(p => ({ ...p, files: [], contents: [], metrics: null, review: null }))} />
                   </div>
                 </div>
@@ -502,7 +502,7 @@ export default function AnalyzePage() {
                     <button
                       onClick={handleRefactor}
                       disabled={state.isRefactoring}
-                      className="w-full p-8 rounded-[2.5rem] bg-linear-to-br from-emerald-500/10 to-transparent border border-emerald-500/20 hover:border-emerald-500/40 transition-all group relative overflow-hidden text-left"
+                      className="w-full p-8 rounded-[2.5rem] bg-gradient-to-br from-emerald-500/10 to-transparent border border-emerald-500/20 hover:border-emerald-500/40 transition-all group relative overflow-hidden text-left"
                     >
                       <div className="relative z-10 flex justify-between items-center">
                         <div>

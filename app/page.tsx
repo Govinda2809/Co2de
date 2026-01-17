@@ -68,7 +68,7 @@ export default function Home() {
             alt="Background"
             className="w-full h-full object-cover opacity-60 scale-105 animate-slow-zoom"
           />
-          <div className="absolute inset-0 bg-linear-to-b from-black/30 via-black/50 to-[#0a0a0a]"></div>
+          <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/50 to-[#0a0a0a]"></div>
         </div>
 
         <div className="relative z-10 max-w-5xl mx-auto px-6 text-center space-y-8">
@@ -99,7 +99,7 @@ export default function Home() {
 
         {/* Scroll Indicator */}
         <div className="absolute bottom-12 left-1/2 -translate-x-1/2 hero-btn animate-bounce opacity-50">
-          <div className="w-px h-16 bg-linear-to-b from-transparent via-white/50 to-transparent"></div>
+          <div className="w-px h-16 bg-gradient-to-b from-transparent via-white/50 to-transparent"></div>
         </div>
       </section>
 
@@ -123,7 +123,7 @@ export default function Home() {
               icon: Sparkles
             }
           ].map((item, i) => (
-            <div key={i} className="feature-card p-8 rounded-3xl bg-white/2 border border-white/5 hover:border-white/10 hover:bg-white/4 transition-all duration-500 group">
+            <div key={i} className="feature-card p-8 rounded-3xl bg-white/[0.02] border border-white/5 hover:border-white/10 hover:bg-white/[0.04] transition-all duration-500 group">
               <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center mb-6 text-white/60 group-hover:text-white group-hover:scale-110 transition-all duration-500">
                 <item.icon size={20} strokeWidth={1.5} />
               </div>
@@ -136,8 +136,8 @@ export default function Home() {
 
       {/* CTA SECTION */}
       <section className="relative z-10 w-full max-w-5xl mx-auto py-32 px-6 text-center">
-        <div className="feature-card space-y-8 p-12 md:p-24 rounded-[3rem] bg-linear-to-b from-white/3 to-transparent border border-white/5 backdrop-blur-sm overflow-hidden relative">
-          <div className="absolute top-0 inset-x-0 h-px bg-linear-to-r from-transparent via-white/20 to-transparent" />
+        <div className="feature-card space-y-8 p-12 md:p-24 rounded-[3rem] bg-gradient-to-b from-white/[0.03] to-transparent border border-white/5 backdrop-blur-sm overflow-hidden relative">
+          <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
 
           <h2 className="text-4xl md:text-6xl font-semibold tracking-tight text-white mb-6">
             Refine your impact.

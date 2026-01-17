@@ -155,11 +155,11 @@ export default function LoginPage() {
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <button className="flex items-center justify-center gap-2 py-3 rounded-xl border border-white/10 hover:bg-white/5 transition-colors bg-white/2">
+              <button className="flex items-center justify-center gap-2 py-3 rounded-xl border border-white/10 hover:bg-white/5 transition-colors bg-white/[0.02]">
                 <svg viewBox="0 0 24 24" className="w-5 h-5" aria-hidden="true"><path d="M12.0003 20.45c4.6667 0 8.45-3.7833 8.45-8.45 0-.4167-.0334-.8167-.1-1.2h-8.35v2.4h4.7833c-.2 1.0833-1.0833 2-2.3 2.8l-.0232.1554 3.3283 2.5768.2306.0229c2.0667-1.9 3.25-4.7 3.25-7.9551 0-.825-.1333-1.6167-.3667-2.3667H12.0003v-2.4h8.8834c.15.7833.2333 1.5833.2333 2.4 0 .8167-.0833 1.6167-.2333 2.4H12.0003v4.6167z" fill="#4285F4" /><path d="M2.6835 14.2833l3.6167-2.8333c1.0333 3.0333 3.8833 5.2 7.2166 5.2 1.6334 0 3.1667-.5833 4.35-1.55l3.5834 2.7667C19.3335 19.95 15.9335 21.65 12.0002 21.65c-4.9167 0-9.1-3.2333-10.7667-7.3667l1.45-1.1z" fill="#34A853" /><path d="M13.5169 5.2833l3.6 2.8c-1.1833-1-2.7167-1.5833-4.35-1.5833-3.3334 0-6.1834 2.1667-7.2167 5.2l-3.6-2.8167C4.1669 4.3 8.3502 1.0833 13.5169 1.0833z" fill="#EA4335" /><path d="M12.0003 4.8833c1.8334 0 3.5167.65 4.85 1.7167l3.6-2.8C18.4336 2.05 15.4336.4833 12.0003.4833 6.8336.4833 2.4503 3.4833.4836 7.85l3.5834 2.8c1.0333-2.9833 3.8666-5.1167 7.9333-5.7667z" fill="#FBBC05" /></svg>
                 <span className="text-sm">Google</span>
               </button>
-              <button className="flex items-center justify-center gap-2 py-3 rounded-xl border border-white/10 hover:bg-white/5 transition-colors bg-white/2">
+              <button className="flex items-center justify-center gap-2 py-3 rounded-xl border border-white/10 hover:bg-white/5 transition-colors bg-white/[0.02]">
                 <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current" aria-hidden="true"><path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.78.85.04 2.09-.96 3.84-.75 1.03.11 2.07.59 2.08.61-.06.04-1.96 1.15-1.96 3.51 0 2.87 2.21 4.02 2.37 4.12-.17.52-.4 1.15-.76 1.69-.9 1.33-1.78 2.07-2.61 3h-.04zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.16 2.29-2.2 4.1-3.74 4.25z" /></svg>
                 <span className="text-sm">Apple</span>
               </button>

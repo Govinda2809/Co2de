@@ -74,7 +74,7 @@ export default function AboutPage() {
             alt="Methodology Background"
             className="w-full h-full object-cover opacity-50 scale-105 animate-slow-zoom"
           />
-          <div className="absolute inset-0 bg-linear-to-b from-[#0a0a0a]/30 via-[#0a0a0a]/60 to-[#0a0a0a]"></div>
+          <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a0a]/30 via-[#0a0a0a]/60 to-[#0a0a0a]"></div>
         </div>
 
         <div className="relative z-10 max-w-4xl mx-auto px-6 text-center space-y-8">
@@ -113,7 +113,7 @@ export default function AboutPage() {
 
         <div className="grid md:grid-cols-3 gap-6">
           {principles.map((principle, i) => (
-            <div key={i} className="anim-card group relative p-10 rounded-4xl bg-white/2 border border-white/5 overflow-hidden hover:bg-white/4 transition-colors duration-500">
+            <div key={i} className="anim-card group relative p-10 rounded-[2rem] bg-white/[0.02] border border-white/5 overflow-hidden hover:bg-white/[0.04] transition-colors duration-500">
               <div className="mb-12">
                 <span className="text-6xl font-light text-white/5 group-hover:text-white/10 transition-colors">0{i + 1}</span>
               </div>
@@ -133,7 +133,7 @@ export default function AboutPage() {
 
       {/* DETAILED METHODOLOGY */}
       <section className="relative z-10 max-w-5xl mx-auto px-6 mb-32">
-        <div className="anim-card p-12 md:p-20 rounded-[3rem] bg-linear-to-b from-white/3 to-transparent border border-white/5 backdrop-blur-xl relative overflow-hidden">
+        <div className="anim-card p-12 md:p-20 rounded-[3rem] bg-gradient-to-b from-white/[0.03] to-transparent border border-white/5 backdrop-blur-xl relative overflow-hidden">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             <div className="space-y-8">
               <h2 className="text-3xl md:text-4xl font-medium leading-tight">
