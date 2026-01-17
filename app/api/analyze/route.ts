@@ -6,11 +6,8 @@ import { AIReviewSchema } from '@/lib/schemas';
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 
 /**
- * LARGE_CONTEXT_FREE_MODELS
+ * LARGE_CONTEXT_FREE_MODELS_V5
  * Curated list of high-context, high-performance free models on OpenRouter.
- * 1. DeepSeek R1 (Distill Llama 70B) - Excellent reasoning for architecture.
- * 2. Gemini 2.0 Flash Lite - Ultra-fast, high-token capacity.
- * 3. Phi 3 Medium - Efficient, high-quality small model results.
  */
 const FREE_MODELS = [
   "deepseek/deepseek-r1-distill-llama-70b:free",
@@ -27,7 +24,7 @@ async function callAI(code: string, systemPrompt: string, apiKey: string, model:
       "Authorization": `Bearer ${apiKey}`,
       "Content-Type": "application/json",
       "HTTP-Referer": "https://co2de.dev",
-      "X-Title": "CO2DE Audit Engine",
+      "X-Title": "CO2DE Audit Engine v5",
     },
     body: JSON.stringify({
       model: model,
@@ -52,7 +49,6 @@ async function callAI(code: string, systemPrompt: string, apiKey: string, model:
   try {
     return JSON.parse(content);
   } catch (e) {
-    // Attempt to extract JSON if AI wrapped it in markdown
     const jsonMatch = content.match(/\{[\s\S]*\}/);
     if (jsonMatch) return JSON.parse(jsonMatch[0]);
     throw new Error("Failed to parse AI response as JSON.");
@@ -71,22 +67,45 @@ export async function POST(request: Request) {
       1. Reducing O(n) complexity to O(1) or O(log n).
       2. Minimizing memory allocations and garbage collection pressure.
       3. Removing redundant computations.
+      4. Replacing heavy dependencies with native alternatives.
       Return ONLY a JSON object: { "refactoredCode": "string", "explanation": "string" }.`;
     } else {
       const context = metrics ? `\n\nMetric Context: Big_O=${metrics.complexity}, Mem_Pressure=${metrics.memPressure}, Lines=${metrics.lineCount}, Language=${metrics.language}` : "";
-      systemPrompt = `You are a Sustainability Auditor. Analyze the code for environmental footprint. ${context}
-      Identify any heavy or inefficient code dependencies and suggest lighter alternatives.
-      Return a JSON object: { 
-        "score": number (1-10), 
-        "bottleneck": "string", 
-        "optimization": "string", 
+      systemPrompt = `You are an Elite Green Software Auditor with deep expertise in sustainable computing. 
+      Analyze the provided code comprehensively. ${context}
+      
+      Your analysis MUST include:
+      1. SUMMARY: A clear, technical explanation of what this code does (2-3 sentences).
+      2. SCORE: Rate efficiency 1-10 based on algorithmic complexity, memory usage, and energy patterns.
+      3. BOTTLENECK: Identify the single most impactful performance bottleneck.
+      4. OPTIMIZATION: Provide a specific, actionable optimization strategy.
+      5. IMPROVEMENT: Quantify potential efficiency gains.
+      6. DEPENDENCIES: Detect ALL imported packages/libraries. For each:
+         - name: The package name (e.g., "lodash", "moment", "axios")
+         - impact: How it affects bundle size and runtime performance
+         - alternative: A lighter, more efficient alternative
+         - severity: "low" | "medium" | "high" | "critical"
+         - bundleSizeKb: Estimated bundle size contribution (number)
+         - category: "runtime" | "devtool" | "utility" | "framework" | "polyfill"
+      7. HOTSPOTS: Identify specific lines or patterns that are inefficient:
+         - description: What the issue is
+         - severity: "info" | "warning" | "critical"
+      8. SECURITY_NOTES: Any security concerns related to dependencies or patterns.
+      
+      Return a JSON object with this exact structure:
+      {
+        "score": number,
+        "summary": "string",
+        "bottleneck": "string",
+        "optimization": "string",
         "improvement": "string",
-        "dependencies": [
-          { "name": "string", "impact": "description", "alternative": "suggestion" }
-        ]
-      }.
-      If no significant dependencies are found, return an empty array for dependencies.
-      Ensure the score reflects the complexity metrics provided.`;
+        "dependencies": [{ "name": "string", "impact": "string", "alternative": "string", "severity": "low|medium|high|critical", "bundleSizeKb": number, "category": "runtime|devtool|utility|framework|polyfill" }],
+        "hotspots": [{ "description": "string", "severity": "info|warning|critical" }],
+        "securityNotes": "string or null"
+      }
+      
+      If no dependencies are detected, return an empty array.
+      Be thorough - analyze import statements, require calls, and any external module references.`;
     }
 
     if (!OPENROUTER_API_KEY) {
@@ -96,11 +115,10 @@ export async function POST(request: Request) {
     let content;
     const errors: string[] = [];
 
-    // Fallback Loop Through Large Context Free Models
     for (const model of FREE_MODELS) {
       try {
         content = await callAI(code, systemPrompt, OPENROUTER_API_KEY, model);
-        if (content) break; // Success!
+        if (content) break;
       } catch (e: any) {
         errors.push(`${model}: ${e.message}`);
         console.warn(`Model ${model} failed, trying next...`);

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { FileCode, Clock, TrendingUp, Upload, Zap, RefreshCw, ShieldCheck, Search, Trash2, Download } from "lucide-react";
+import { FileCode, Clock, TrendingUp, Upload, Zap, RefreshCw, ShieldCheck, Search, Trash2, Download, Leaf, Calendar } from "lucide-react";
 import { client, databases, DATABASE_ID, COLLECTION_ID } from "@/lib/appwrite";
 import { Query } from "appwrite";
 import { useAuth } from "@/hooks/use-auth";
@@ -174,7 +174,8 @@ export default function DashboardPage() {
         )}
 
         {/* Dynamic Stats Board */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 mb-24">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-24">
+          {/* Energy Trend Chart */}
           <div className="lg:col-span-2 p-10 rounded-[3.5rem] bg-white/[0.01] border border-white/5 backdrop-blur-3xl relative overflow-hidden group">
             <div className="flex items-center justify-between mb-8">
               <h3 className="text-[10px] font-mono text-gray-500 uppercase tracking-[0.5em]">Energy_Consumption_Trend</h3>
@@ -184,30 +185,50 @@ export default function DashboardPage() {
             <EnergyTrendChart data={trendData} />
           </div>
 
-          <div className="grid grid-cols-2 lg:grid-cols-1 gap-6">
-            {[
-              { label: "Net_Energy", value: totalEnergy.toFixed(3), unit: "kWh", color: "text-amber-500" },
-              { label: "Avg_Offset", value: `+${avgSaved.toFixed(0)}`, unit: "%", color: "text-emerald-500" },
-            ].map((stat, i) => (
-              <div key={i} className="p-10 rounded-[3rem] bg-white/[0.02] border border-white/5 group hover:border-emerald-500/20 transition-all relative overflow-hidden flex items-center justify-center">
-                <div className="space-y-4 relative z-10 text-center">
-                  <p className="text-[10px] font-mono text-gray-500 uppercase tracking-[0.2em]">{stat.label}</p>
-                  <div className="flex items-baseline justify-center gap-2">
-                    <p className={cn("text-5xl font-black tracking-tighter italic", stat.color)}>{stat.value}</p>
-                    <p className="text-[10px] font-mono text-gray-600 uppercase italic">{stat.unit}</p>
-                  </div>
-                </div>
+          {/* Key Metrics */}
+          {[
+            { label: "Total_Energy", value: totalEnergy.toFixed(2), unit: "kWh", color: "text-amber-500", icon: Zap },
+            { label: "Total_CO2", value: (totalCO2 / 1000).toFixed(2), unit: "kg", color: "text-emerald-500", icon: Leaf },
+            { label: "Annual_Projection", value: ((totalCO2 * 365) / analyses.length / 1000).toFixed(1), unit: "kg/yr", color: "text-blue-500", icon: Calendar },
+          ].map((stat, i) => (
+            <div key={i} className="p-8 rounded-[3rem] bg-white/[0.02] border border-white/5 group hover:border-emerald-500/20 transition-all relative overflow-hidden flex flex-col justify-center text-center space-y-3">
+              <stat.icon size={20} className={cn("mx-auto opacity-50", stat.color)} />
+              <p className="text-[9px] font-mono text-gray-500 uppercase tracking-[0.2em]">{stat.label}</p>
+              <div className="flex items-baseline justify-center gap-1">
+                <p className={cn("text-3xl font-black tracking-tighter italic", stat.color)}>{stat.value}</p>
+                <p className="text-[9px] font-mono text-gray-600 uppercase">{stat.unit}</p>
               </div>
-            ))}
+            </div>
+          ))}
+        </div>
+
+        {/* Carbon Summary Panel */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-24">
+          <div className="p-8 rounded-[2.5rem] bg-gradient-to-br from-emerald-500/5 to-transparent border border-emerald-500/10 space-y-4">
+            <p className="text-[9px] font-mono text-emerald-500 uppercase tracking-widest font-black">Efficiency_Score</p>
+            <p className="text-5xl font-black text-emerald-500 italic">{avgScore.toFixed(1)}<span className="text-lg">/10</span></p>
+            <div className="flex items-center gap-2">
+              <ShieldCheck size={12} className="text-emerald-500" />
+              <span className="text-[8px] font-mono text-gray-600 uppercase tracking-widest">Avg across {analyses.length} audits</span>
+            </div>
+          </div>
+          
+          <div className="p-8 rounded-[2.5rem] bg-white/[0.02] border border-white/5 space-y-4">
+            <p className="text-[9px] font-mono text-amber-500 uppercase tracking-widest font-black">Trees_to_Offset</p>
+            <p className="text-5xl font-black text-amber-500 italic">{Math.ceil((totalCO2 / 1000) / 21.77 * 365)}</p>
+            <p className="text-[8px] font-mono text-gray-600 uppercase tracking-widest">Trees per year to neutralize</p>
           </div>
 
-          <div className="p-10 rounded-[3rem] bg-white/[0.02] border border-white/5 group hover:border-emerald-500/20 transition-all relative overflow-hidden flex flex-col justify-center text-center space-y-4">
-             <p className="text-[10px] font-mono text-gray-500 uppercase tracking-[0.2em]">Efficiency_Index</p>
-             <p className="text-6xl font-black tracking-tighter italic text-blue-500">{avgScore.toFixed(1)}</p>
-             <div className="flex items-center justify-center gap-2">
-                <ShieldCheck size={12} className="text-emerald-500" />
-                <span className="text-[9px] font-mono text-gray-600 uppercase tracking-widest font-black">Optimization_Certified</span>
-             </div>
+          <div className="p-8 rounded-[2.5rem] bg-white/[0.02] border border-white/5 space-y-4">
+            <p className="text-[9px] font-mono text-blue-500 uppercase tracking-widest font-black">Scope_2_Emissions</p>
+            <p className="text-5xl font-black text-blue-500 italic">{((totalCO2 * 365) / analyses.length / 1000).toFixed(1)}<span className="text-lg">kg</span></p>
+            <p className="text-[8px] font-mono text-gray-600 uppercase tracking-widest">Electricity (annual)</p>
+          </div>
+
+          <div className="p-8 rounded-[2.5rem] bg-white/[0.02] border border-white/5 space-y-4">
+            <p className="text-[9px] font-mono text-purple-500 uppercase tracking-widest font-black">Optimization_Rate</p>
+            <p className="text-5xl font-black text-purple-500 italic">+{avgSaved.toFixed(0)}<span className="text-lg">%</span></p>
+            <p className="text-[8px] font-mono text-gray-600 uppercase tracking-widest">Avg efficiency gain</p>
           </div>
         </div>
 
@@ -238,6 +259,9 @@ export default function DashboardPage() {
                       <h3 className="text-3xl font-black truncate tracking-tighter uppercase italic">{analysis.fileName}</h3>
                       <div className="flex flex-wrap items-center gap-6 text-[10px] font-mono text-gray-600 uppercase tracking-widest">
                         <span className="px-3 py-1 rounded-full border border-white/10 bg-white/5 text-emerald-500/80">{(analysis.fileSize / 1024).toFixed(1)} KB Packet</span>
+                        {analysis.clientCity && analysis.clientCountry && (
+                          <span className="text-cyan-500/50">{analysis.clientCity}, {analysis.clientCountry}</span>
+                        )}
                         {analysis.region && <span className="text-amber-500/50">{analysis.region}</span>}
                         {analysis.language && <span className="text-blue-500/50">{analysis.language}</span>}
                         {analysis.complexity && <span className="text-emerald-500/50">O({analysis.complexity.toFixed(1)})</span>}
@@ -246,6 +270,9 @@ export default function DashboardPage() {
                           {new Date(analysis.createdAt).toLocaleDateString()}
                         </span>
                       </div>
+                      {analysis.summary && (
+                        <p className="text-[11px] text-gray-500 font-medium leading-relaxed line-clamp-2 mt-2">{analysis.summary}</p>
+                      )}
                     </div>
                   </div>
 

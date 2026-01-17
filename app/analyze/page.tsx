@@ -4,9 +4,9 @@ import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { FileUpload } from "@/components/upload";
-import { MetricsDisplay, EnergyScoreChart, AIReviewCard, GridTimeline, RegionalHeatmap, HardwareThermalIndex } from "@/components/dashboard";
+import { MetricsDisplay, EnergyScoreChart, AIReviewCard, GridTimeline, RegionalHeatmap, HardwareThermalIndex, TelemetryStream, CarbonProjections } from "@/components/dashboard";
 import { calculateEnergyMetrics, REGIONS, HARDWARE_PROFILES, getGridIntensity, getAIReview, getAIRefactor } from "@/lib/energy";
-import { AnalysisItemSchema, AIReview } from "@/lib/schemas";
+import { AnalysisItemSchema, AIReview, Geolocation } from "@/lib/schemas";
 import { Sparkles, RotateCcw, Loader2, Zap, TrendingUp, BarChart3, Globe, Cpu, Terminal, CheckCircle2, FileStack, Save, Copy, Check, ShieldCheck, Rocket, ArrowRight, BrainCircuit, Activity, Eye, EyeOff } from "lucide-react";
 import { databases, DATABASE_ID, COLLECTION_ID, ID } from "@/lib/appwrite";
 import { useAuth } from "@/hooks/use-auth";
@@ -27,6 +27,7 @@ interface AnalysisState {
   isSaving: boolean;
   isSaved: boolean;
   lastSavedId: string | null;
+  geolocation: Geolocation | null;
 }
 
 export default function AnalyzePage() {
@@ -48,6 +49,7 @@ export default function AnalyzePage() {
     isSaving: false,
     isSaved: false,
     lastSavedId: null,
+    geolocation: null,
   });
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -57,6 +59,21 @@ export default function AnalyzePage() {
       router.push("/login?callbackUrl=/analyze");
     }
   }, [user, authLoading, router]);
+
+  // Auto-detect region from IP on page load
+  useEffect(() => {
+    const fetchGeolocation = async () => {
+      try {
+        const response = await fetch('/api/geolocation');
+        if (!response.ok) throw new Error('Geolocation failed');
+        const geo = await response.json();
+        setState(p => ({ ...p, region: geo.region, geolocation: geo }));
+      } catch (error) {
+        console.error('Geolocation detection failed:', error);
+      }
+    };
+    fetchGeolocation();
+  }, []);
 
   const recomputeMetrics = useCallback(async (files: File[], contents: string[], targetRegion: string, targetHardware: string) => {
     try {
@@ -135,11 +152,17 @@ export default function AnalyzePage() {
         lineCount: state.metrics.lineCount,
         region: state.region,
         hardwareProfile: state.hardware,
-        gridIntensity: state.metrics.gridIntensity,
+        gridIntensity: state.geolocation?.gridIntensity || state.metrics.gridIntensity,
         recursionDetected: state.metrics.recursionDetected,
         optimizationDelta: state.refactored ? Math.max(0, ((state.review?.score || 0) - (state.refactored.metrics?.score || 0)) * -10) : undefined,
         language: state.metrics.language,
-        engineVersion: '4.0.0-gamma'
+        summary: state.review?.summary,
+        securityNotes: state.review?.securityNotes,
+        hotspots: state.review?.hotspots,
+        clientCity: state.geolocation?.city,
+        clientCountry: state.geolocation?.country,
+        clientIp: state.geolocation?.ip,
+        engineVersion: '5.0.0-delta'
       };
       const doc = await databases.createDocument(DATABASE_ID, COLLECTION_ID, ID.unique(), AnalysisItemSchema.parse(payload));
       setState(p => ({ ...p, isSaving: false, isSaved: true, lastSavedId: doc.$id }));
@@ -189,22 +212,42 @@ export default function AnalyzePage() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              {[
-                { label: "Regional Power Grid", icon: Globe, value: state.region, onChange: (v: any) => setState(p => ({...p, region: v})), options: REGIONS, color: "text-emerald-500" },
-                { label: "Hardware TDP Profile", icon: Cpu, value: state.hardware, onChange: (v: any) => setState(p => ({...p, hardware: v})), options: HARDWARE_PROFILES, color: "text-amber-500" }
-              ].map((ctrl, i) => (
-                <div key={i} className="p-8 rounded-[2.5rem] bg-white/[0.01] border border-white/5 space-y-6 hover:bg-white/[0.03] transition-all">
-                  <div className="flex items-center gap-2 text-[10px] font-mono text-gray-500 uppercase tracking-widest font-bold">
-                    <ctrl.icon size={14} className={ctrl.color} />
-                    {ctrl.label}
-                  </div>
-                  <select value={ctrl.value} onChange={(e) => ctrl.onChange(e.target.value)} className="w-full bg-transparent border-none p-0 text-2xl font-black uppercase tracking-tighter focus:ring-0 text-white cursor-pointer">
-                    {Object.entries(ctrl.options).map(([id, { label }]) => (
-                      <option key={id} value={id} className="bg-black text-[14px] uppercase font-mono">{label}</option>
-                    ))}
-                  </select>
+              {/* Regional Power Grid - Auto-detected (Read-only) */}
+              <div className="p-8 rounded-[2.5rem] bg-white/[0.01] border border-white/5 space-y-6 relative overflow-hidden">
+                <div className="absolute top-4 right-4 flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[8px] font-mono text-emerald-500 uppercase tracking-widest font-black animate-in fade-in">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  {state.geolocation ? "Live_IP" : "Detecting..."}
                 </div>
-              ))}
+                <div className="flex items-center gap-2 text-[10px] font-mono text-gray-500 uppercase tracking-widest font-bold">
+                  <Globe size={14} className="text-emerald-500" />
+                  Regional Power Grid
+                </div>
+                <p className="text-2xl font-black uppercase tracking-tighter text-white">
+                  {state.geolocation ? (REGIONS as any)[state.region]?.label?.split(' (')[0] || state.region : "Detecting..."}
+                </p>
+                {state.geolocation?.city && (
+                  <p className="text-[10px] font-mono text-emerald-500/50 uppercase tracking-widest">
+                    📍 {state.geolocation.city}, {state.geolocation.country} • {state.geolocation.gridIntensity} gCO2e/kWh
+                  </p>
+                )}
+              </div>
+
+              {/* Hardware TDP Profile */}
+              <div className="p-8 rounded-[2.5rem] bg-white/[0.01] border border-white/5 space-y-6 hover:bg-white/[0.03] transition-all">
+                <div className="flex items-center gap-2 text-[10px] font-mono text-gray-500 uppercase tracking-widest font-bold">
+                  <Cpu size={14} className="text-amber-500" />
+                  Hardware TDP Profile
+                </div>
+                <select 
+                  value={state.hardware} 
+                  onChange={(e) => setState(p => ({...p, hardware: e.target.value}))} 
+                  className="w-full bg-transparent border-none p-0 text-2xl font-black uppercase tracking-tighter focus:ring-0 text-white cursor-pointer"
+                >
+                  {Object.entries(HARDWARE_PROFILES).map(([id, { label }]) => (
+                    <option key={id} value={id} className="bg-black text-[14px] uppercase font-mono">{label}</option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
 
@@ -249,17 +292,39 @@ export default function AnalyzePage() {
 
             <MetricsDisplay metrics={state.metrics} />
 
+            {/* Carbon Projections */}
+            <CarbonProjections 
+              metrics={{
+                estimatedEnergy: state.metrics.estimatedEnergy,
+                estimatedCO2: state.metrics.estimatedCO2,
+                gridIntensity: state.geolocation?.gridIntensity || state.metrics.gridIntensity,
+              }}
+              executionsPerDay={100}
+            />
+
             <div className="grid lg:grid-cols-3 gap-10">
                <div className="lg:col-span-2 space-y-10">
-                  <RegionalHeatmap selectedRegion={state.region} />
+                  <div className="grid grid-cols-1 md:grid-cols-5 gap-10">
+                    <div className="md:col-span-3">
+                       <RegionalHeatmap 
+                         selectedRegion={state.region} 
+                         onRegionDetected={(region, geo) => {
+                           setState(p => ({ ...p, region, geolocation: geo }));
+                         }}
+                       />
+                    </div>
+                    <div className="md:col-span-2">
+                       <HardwareThermalIndex selectedHardware={state.hardware} complexity={state.metrics.complexity} />
+                    </div>
+                  </div>
+                  
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                     <HardwareThermalIndex selectedHardware={state.hardware} complexity={state.metrics.complexity} />
                      <div className="p-10 rounded-[3.5rem] border border-white/10 bg-white/[0.01] flex flex-col justify-center min-h-[350px]">
                         <h3 className="text-[11px] font-mono font-black mb-8 text-gray-500 uppercase tracking-[0.5em]">Efficiency_Index</h3>
                         <EnergyScoreChart score={state.review?.score || Math.max(1, 10 - Math.floor(state.metrics.complexity * 1.5))} />
                      </div>
+                     <GridTimeline region={state.region} />
                   </div>
-                  <GridTimeline region={state.region} />
                </div>
 
                <div className="space-y-10">
@@ -271,6 +336,8 @@ export default function AnalyzePage() {
                   )}
                   
                   {state.review && <AIReviewCard review={state.review} />}
+                  
+                  <TelemetryStream metrics={state.metrics} isVisible={expertMode} />
 
                   {expertMode && (
                     <div className="p-10 rounded-[3rem] border border-emerald-500/20 bg-emerald-500/[0.02] space-y-6 animate-in slide-in-from-right-10">
