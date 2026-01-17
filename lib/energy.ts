@@ -24,12 +24,20 @@ export const HARDWARE_PROFILES = {
 
 const LANGUAGE_MULTIPLIERS: Record<string, number> = {
   "js": 1.0,
+  "jsx": 1.05,
   "ts": 1.1,
+  "tsx": 1.15,
   "py": 1.8,
   "rs": 0.4,
   "go": 0.6,
   "cpp": 0.35,
+  "c": 0.3,
+  "h": 0.3,
   "java": 1.4,
+  "swift": 0.9,
+  "kotlin": 1.25,
+  "rb": 1.9,
+  "php": 1.6,
 };
 
 export function detectLanguage(fileName: string): string {
@@ -47,9 +55,12 @@ export async function getGridIntensity(region: string = "europe"): Promise<numbe
 
 function calculateASTComplexity(content: string, lang: string): number {
   let complexity = 1.0;
-  if (lang !== 'js' && lang !== 'ts') return estimateComplexityRegex(content);
+  const isJSish = ['js', 'jsx', 'ts', 'tsx'].includes(lang);
+  
+  if (!isJSish) return estimateComplexityRegex(content);
 
   try {
+    // Attempt to parse JS/TS style content
     const tree = acorn.parse(content, { ecmaVersion: 'latest', sourceType: 'module' });
     let loopCount = 0;
     let bigOfactor = 0;
@@ -94,8 +105,8 @@ export function getDeterministicReview(code: string, metrics: any): AIReview {
   const score = Math.max(1, 10 - Math.floor(metrics.complexity * 2));
   return {
     score,
-    bottleneck: metrics.complexity > 2 ? "High time complexity detected via AST parsing." : "Standard execution overhead.",
-    optimization: metrics.complexity > 2 ? "Refactor nested loops into O(1) lookups." : "Optimize variable scoping.",
+    bottleneck: metrics.complexity > 2 ? "High time complexity detected via structural analysis." : "Standard execution overhead.",
+    optimization: metrics.complexity > 2 ? "Refactor nested logic into O(1) mappings." : "Optimize variable lifecycles.",
     improvement: `${Math.round(metrics.complexity * 5)}% Energy reduction possible.`
   };
 }
