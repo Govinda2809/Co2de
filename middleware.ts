@@ -5,30 +5,14 @@ export function middleware(request: NextRequest) {
   // Try to find any Appwrite session cookie
   // Appwrite cookies usually look like: a_session_[PROJECT_ID] or a_session_[NAME]
   const allCookies = request.cookies.getAll();
-  const hasAppwriteSession = allCookies.some(cookie => 
+  const hasAppwriteSession = allCookies.some(cookie =>
     cookie.name.startsWith('a_session_') || cookie.name === 'a_session'
   );
-  
+
   const { pathname } = request.nextUrl;
 
-  // Define protected routes
-  const isProtectedRoute = pathname.startsWith('/dashboard') || pathname.startsWith('/analyze');
-  
-  // Define auth routes (only for guests)
-  const isAuthRoute = pathname.startsWith('/login') || pathname.startsWith('/signup');
-
-  // 1. If trying to access protected route without session -> redirect to login
-  if (isProtectedRoute && !hasAppwriteSession) {
-    const url = new URL('/login', request.url);
-    url.searchParams.set('callbackUrl', pathname);
-    return NextResponse.redirect(url);
-  }
-
-  // 2. If trying to access auth routes while logged in -> redirect to dashboard
-  if (isAuthRoute && hasAppwriteSession) {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
-  }
-
+  // Middleware disabled for now to rely on client-side auth state
+  // This prevents issues where the cookie isn't visible to Next.js but the client SDK works
   return NextResponse.next();
 }
 

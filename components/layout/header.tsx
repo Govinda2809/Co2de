@@ -183,11 +183,13 @@ export function Header() {
 
           {/* User Menu or Sign In */}
           {user ? (
-            <div className="relative z-10">
+            <div
+              className="relative z-10"
+              onMouseEnter={() => setShowUserMenu(true)}
+              onMouseLeave={() => setShowUserMenu(false)}
+            >
               <button
                 onClick={() => setShowUserMenu(!showUserMenu)}
-                onMouseEnter={handleMouseEnter}
-                onMouseLeave={handleMouseLeave}
                 className="flex items-center justify-center px-3 py-2.5 text-gray-400 transition-colors hover:text-white"
                 aria-label="User menu"
               >
@@ -197,22 +199,21 @@ export function Header() {
               </button>
 
               {showUserMenu && (
-                <div className="absolute right-0 top-full mt-4 w-60 p-2 rounded-2xl border border-white/10 bg-[#0a0a0a]/90 backdrop-blur-2xl shadow-xl animate-in fade-in zoom-in-95 duration-200">
+                <div className="absolute right-0 top-full mt-2 w-64 p-2 rounded-2xl border border-white/10 bg-[#0a0a0a]/90 backdrop-blur-2xl shadow-xl animate-in fade-in zoom-in-95 duration-200">
                   <div className="px-4 py-3 border-b border-white/5 mb-2">
-                    <p className="text-sm font-medium text-white">{user.name}</p>
+                    <p className="text-sm font-medium text-white truncate">{user.name}</p>
                     <p className="text-xs text-gray-500 truncate">{user.email}</p>
                   </div>
                   <Link
                     href="/dashboard"
                     className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors"
-                    onClick={() => setShowUserMenu(false)}
                   >
                     <BarChart3 className="w-4 h-4" />
                     Dashboard
                   </Link>
                   <button
                     onClick={handleLogout}
-                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300 w-full transition-colors"
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300 w-full transition-colors font-medium"
                   >
                     <LogOut className="w-4 h-4" />
                     Sign Out

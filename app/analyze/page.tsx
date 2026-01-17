@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { FileUpload } from "@/components/upload";
 import { MetricsDisplay, EnergyScoreChart, AIReviewCard } from "@/components/dashboard";
 import { calculateEnergyMetrics } from "@/lib/energy";
@@ -27,7 +28,8 @@ interface AnalysisState {
 }
 
 export default function AnalyzePage() {
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
+  const router = useRouter();
   const [state, setState] = useState<AnalysisState>({
     file: null,
     content: "",
@@ -35,6 +37,20 @@ export default function AnalyzePage() {
     review: null,
     isAnalyzing: false,
   });
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push("/login?callbackUrl=/analyze");
+    }
+  }, [user, authLoading, router]);
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-white animate-spin" />
+      </div>
+    );
+  }
   const [error, setError] = useState<string | null>(null);
 
   const handleFileAccepted = useCallback(async (file: File, content: string) => {
