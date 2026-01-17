@@ -2,15 +2,13 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { FileCode, Clock, TrendingUp, Upload, User, AlertCircle, Zap, RefreshCw, BarChart3, ShieldCheck } from "lucide-react";
+import { FileCode, Clock, TrendingUp, Upload, Zap, RefreshCw, ShieldCheck, Search, Trash2, Download } from "lucide-react";
 import { client, databases, DATABASE_ID, COLLECTION_ID } from "@/lib/appwrite";
 import { Query } from "appwrite";
 import { useAuth } from "@/hooks/use-auth";
 import { AnalysisItemSchema, AnalysisItem } from "@/lib/schemas";
 import { cn } from "@/lib/utils";
-
 import { EnergyTrendChart } from "@/components/dashboard/energy-trend";
-import { Search } from "lucide-react";
 
 export default function DashboardPage() {
   const { user, isLoading: authLoading } = useAuth();
@@ -74,12 +72,34 @@ export default function DashboardPage() {
 
   const totalEnergy = analyses.reduce((sum, a) => sum + (a.estimatedEnergy || 0), 0);
   const totalCO2 = analyses.reduce((sum, a) => sum + (a.estimatedCO2 || 0), 0);
+  const totalSaved = analyses.reduce((sum, a) => sum + (a.optimizationDelta || 0), 0);
   const avgScore = analyses.length > 0 ? analyses.reduce((sum, a) => sum + (a.score || 0), 0) / analyses.length : 0;
 
   const trendData = analyses.slice().reverse().map(a => ({
     date: new Date(a.createdAt).toLocaleDateString(),
     energy: a.estimatedEnergy
   }));
+
+  const deleteAnalysis = async (id: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!DATABASE_ID || !COLLECTION_ID) return;
+    if (!confirm("Confirm protocol deletion? This action is irreversible.")) return;
+    try {
+      await databases.deleteDocument(DATABASE_ID, COLLECTION_ID, id);
+      setAnalyses(prev => prev.filter(a => a.$id !== id));
+    } catch (err) { alert("Deletion failed."); }
+  };
+
+  const exportLedger = () => {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(analyses, null, 2));
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", `CO2DE_Ledger_${new Date().toISOString().split('T')[0]}.json`);
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+  };
 
   if (authLoading || (dataLoading && !analyses.length)) {
     return (
@@ -98,8 +118,8 @@ export default function DashboardPage() {
         <div className="mb-20 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-12">
           <div className="space-y-6">
             <div className="flex items-center gap-3">
-              <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-              <h2 className="text-[10px] font-mono text-emerald-500 uppercase tracking-[0.5em]">Protocol.Vault_v4.0</h2>
+              <div className="h-px w-8 bg-emerald-500" />
+              <h2 className="text-[10px] font-mono text-emerald-500 uppercase tracking-[0.5em]">Protocol.Vault_v4.2</h2>
             </div>
             <h1 className="text-5xl sm:text-8xl font-black tracking-tighter uppercase leading-none italic">
               User_<span className="text-emerald-500">{user?.name.split(' ')[0]}</span>
@@ -111,6 +131,13 @@ export default function DashboardPage() {
           </div>
           
           <div className="flex flex-wrap gap-4">
+            <button 
+              onClick={exportLedger}
+              className="flex items-center gap-3 px-8 py-5 rounded-full border border-white/5 bg-white/[0.02] text-[10px] font-mono uppercase tracking-[0.2em] text-gray-500 hover:text-white hover:bg-white/5 transition-all"
+            >
+              <Download size={14} />
+              Export_Ledger
+            </button>
             <div className="relative group overflow-hidden rounded-full border border-white/5 bg-white/[0.02] focus-within:border-emerald-500/50 transition-all">
               <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600 group-focus-within:text-emerald-500 transition-colors" />
               <input 
@@ -143,7 +170,8 @@ export default function DashboardPage() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-24">
+        {/* Dynamic Stats Board */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 mb-24">
           <div className="lg:col-span-2 p-10 rounded-[3.5rem] bg-white/[0.01] border border-white/5 backdrop-blur-3xl relative overflow-hidden group">
             <div className="flex items-center justify-between mb-8">
               <h3 className="text-[10px] font-mono text-gray-500 uppercase tracking-[0.5em]">Energy_Consumption_Trend</h3>
@@ -155,19 +183,28 @@ export default function DashboardPage() {
 
           <div className="grid grid-cols-2 lg:grid-cols-1 gap-6">
             {[
-              { label: "Net_Energy", value: totalEnergy.toFixed(3), unit: "kWh", icon: Zap, color: "text-amber-500" },
-              { label: "Net_CO2e", value: totalCO2.toFixed(2), unit: "g", icon: TrendingUp, color: "text-emerald-500" },
+              { label: "Net_Energy", value: totalEnergy.toFixed(3), unit: "kWh", color: "text-amber-500" },
+              { label: "Carbon_Offset", value: `+${totalSaved.toFixed(0)}`, unit: "%", color: "text-emerald-500" },
             ].map((stat, i) => (
-              <div key={i} className="p-10 rounded-[3rem] bg-white/[0.02] border border-white/5 group hover:border-emerald-500/20 transition-all relative overflow-hidden">
+              <div key={i} className="p-10 rounded-[3rem] bg-white/[0.02] border border-white/5 group hover:border-emerald-500/20 transition-all relative overflow-hidden flex items-center justify-center">
                 <div className="space-y-4 relative z-10 text-center">
                   <p className="text-[10px] font-mono text-gray-500 uppercase tracking-[0.2em]">{stat.label}</p>
                   <div className="flex items-baseline justify-center gap-2">
-                    <p className="text-5xl font-black tracking-tighter italic">{stat.value}</p>
+                    <p className={cn("text-5xl font-black tracking-tighter italic", stat.color)}>{stat.value}</p>
                     <p className="text-[10px] font-mono text-gray-600 uppercase italic">{stat.unit}</p>
                   </div>
                 </div>
               </div>
             ))}
+          </div>
+
+          <div className="p-10 rounded-[3rem] bg-white/[0.02] border border-white/5 group hover:border-emerald-500/20 transition-all relative overflow-hidden flex flex-col justify-center text-center space-y-4">
+             <p className="text-[10px] font-mono text-gray-500 uppercase tracking-[0.2em]">Efficiency_Index</p>
+             <p className="text-6xl font-black tracking-tighter italic text-blue-500">{avgScore.toFixed(1)}</p>
+             <div className="flex items-center justify-center gap-2">
+                <ShieldCheck size={12} className="text-emerald-500" />
+                <span className="text-[9px] font-mono text-gray-600 uppercase tracking-widest font-black">Optimization_Certified</span>
+             </div>
           </div>
         </div>
 
@@ -218,9 +255,14 @@ export default function DashboardPage() {
                       <p className="text-[10px] font-mono text-gray-600 uppercase tracking-widest">CO2e</p>
                       <p className="text-3xl font-black text-emerald-500 font-mono tracking-tighter italic">{analysis.estimatedCO2?.toFixed(2)}</p>
                     </div>
-                    <div className="space-y-1">
+                    <div className="flex flex-col items-end gap-2">
                       <p className="text-[10px] font-mono text-gray-600 uppercase tracking-widest">Grade</p>
-                      <p className="text-3xl font-black text-white font-mono tracking-tighter italic">{analysis.score}/10</p>
+                      <div className="flex items-center gap-4">
+                        <p className="text-3xl font-black text-white font-mono tracking-tighter italic">{analysis.score}/10</p>
+                        <button onClick={(e) => deleteAnalysis(analysis.$id!, e)} className="p-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-500 opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500 hover:text-white">
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -232,7 +274,7 @@ export default function DashboardPage() {
                     </div>
                     <div className="space-y-2">
                        <p className="text-[10px] font-mono text-emerald-500/50 uppercase tracking-[0.2em] font-bold underline decoration-emerald-500/20 underline-offset-4">Optimization_Strategy</p>
-                       <p className="text-[13px] text-gray-400 font-medium leading-relaxed max-w-4xl lowercase first-letter:uppercase">
+                       <p className="text-[13px] text-gray-400 font-medium leading-relaxed max-w-4xl lowercase first-letter:uppercase text-ellipsis">
                           {analysis.optimization}
                        </p>
                     </div>
