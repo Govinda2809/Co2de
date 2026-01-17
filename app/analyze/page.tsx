@@ -7,14 +7,14 @@ import { FileUpload } from "@/components/upload";
 import { MetricsDisplay, EnergyScoreChart, AIReviewCard } from "@/components/dashboard";
 import { calculateEnergyMetrics, REGIONS, HARDWARE_PROFILES } from "@/lib/energy";
 import { AnalysisItemSchema, AIReview } from "@/lib/schemas";
-import { Sparkles, RotateCcw, Loader2, Zap, TrendingUp, BarChart3, Globe, Cpu, Play, Terminal, CheckCircle2, XCircle } from "lucide-react";
+import { Sparkles, RotateCcw, Loader2, Zap, TrendingUp, BarChart3, Globe, Cpu, Play, Terminal, CheckCircle2, Files, FileCode } from "lucide-react";
 import { storage, databases, DATABASE_ID, COLLECTION_ID, BUCKET_ID, ID } from "@/lib/appwrite";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 
 interface AnalysisState {
-  file: File | null;
-  content: string;
+  files: File[];
+  contents: string[];
   metrics: any | null;
   review: AIReview | null;
   isAnalyzing: boolean;
@@ -30,8 +30,8 @@ export default function AnalyzePage() {
   const { user, isLoading: authLoading } = useAuth();
   const router = useRouter();
   const [state, setState] = useState<AnalysisState>({
-    file: null,
-    content: "",
+    files: [],
+    contents: [],
     metrics: null,
     review: null,
     isAnalyzing: false,
@@ -50,62 +50,78 @@ export default function AnalyzePage() {
     }
   }, [user, authLoading, router]);
 
-  // Recalculate metrics if region or hardware changes
-  useEffect(() => {
-    if (state.file && state.content) {
-      recalculate();
-    }
-  }, [state.region, state.hardware]);
-
-  const recalculate = async () => {
-    if (!state.file) return;
-    const metrics = await calculateEnergyMetrics(state.file.size, state.file.name, state.content, state.region, state.hardware);
-    setState(prev => ({ ...prev, metrics }));
-  };
-
-  const handleFileAccepted = useCallback(async (file: File, content: string) => {
-    setState((prev) => ({ ...prev, file, content, isAnalyzing: true, refactored: null, runResults: [] }));
+  const handleFilesAccepted = useCallback(async (processed: { file: File, content: string }[]) => {
+    const files = processed.map(p => p.file);
+    const contents = processed.map(p => p.content);
+    
+    setState((prev) => ({ ...prev, files, contents, isAnalyzing: true, refactored: null, runResults: [] }));
     setError(null);
 
     try {
-      const metrics = await calculateEnergyMetrics(file.size, file.name, content, state.region, state.hardware);
-      const { getAIReview } = await import("@/lib/energy");
-      const review = await getAIReview(content, metrics);
+      let totalEnergy = 0;
+      let totalCO2 = 0;
+      let avgScore = 0;
+      let maxComplexity = 0;
+      let totalLines = 0;
 
-      const rawData = {
-        fileName: file.name,
-        fileSize: file.size,
-        fileId: "simulated_" + Date.now(),
-        estimatedEnergy: metrics.estimatedEnergy,
-        estimatedCO2: metrics.estimatedCO2,
-        score: review.score,
-        bottleneck: review.bottleneck,
-        optimization: review.optimization,
-        improvement: review.improvement,
-        createdAt: new Date().toISOString(),
-        userId: user?.$id,
+      // Aggregate findings for all files
+      for (let i = 0; i < processed.length; i++) {
+        const m = await calculateEnergyMetrics(processed[i].file.size, processed[i].file.name, processed[i].content, state.region, state.hardware);
+        totalEnergy += m.estimatedEnergy;
+        totalCO2 += m.estimatedCO2;
+        maxComplexity = Math.max(maxComplexity, m.complexity);
+        totalLines += m.lineCount;
+      }
+
+      // Analyze the largest/most complex file for the AI Review
+      const mainIndex = 0; // In a real app we might pick the largest
+      const { getAIReview } = await import("@/lib/energy");
+      const review = await getAIReview(contents[mainIndex], { 
+        complexity: maxComplexity, 
+        language: files[mainIndex].name.split('.').pop(),
+        lineCount: totalLines
+      });
+
+      const metrics = {
+        estimatedEnergy: Math.round(totalEnergy * 1000) / 1000,
+        estimatedCO2: Math.round(totalCO2 * 100) / 100,
+        gridIntensity: await (await import("@/lib/energy")).getGridIntensity(state.region),
+        lineCount: totalLines,
+        complexity: maxComplexity,
+        energyUnit: 'kWh',
+        co2Unit: 'gCO2e'
       };
 
-      const validated = AnalysisItemSchema.parse(rawData);
-
       if (user && DATABASE_ID && COLLECTION_ID) {
+        const validated = AnalysisItemSchema.parse({
+          fileName: files.length > 1 ? `${files.length} Files Packet` : files[0].name,
+          fileSize: files.reduce((acc, f) => acc + f.size, 0),
+          fileId: "sim_" + Date.now(),
+          estimatedEnergy: metrics.estimatedEnergy,
+          estimatedCO2: metrics.estimatedCO2,
+          score: review.score,
+          bottleneck: review.bottleneck,
+          optimization: review.optimization,
+          improvement: review.improvement,
+          createdAt: new Date().toISOString(),
+          userId: user?.$id,
+        });
         await databases.createDocument(DATABASE_ID, COLLECTION_ID, ID.unique(), validated);
       }
 
       setState((prev) => ({ ...prev, metrics, review, isAnalyzing: false }));
     } catch (err: any) {
-      console.error("Audit Protocol Failure:", err);
-      setError(err.message || "Auditing sequence interrupted. Check network connectivity.");
+      setError("Multi-file audit failed. Ensure all objects are text-based.");
       setState((prev) => ({ ...prev, isAnalyzing: false }));
     }
   }, [user, state.region, state.hardware]);
 
   const handleRefactor = async () => {
-    if (!state.content) return;
+    if (state.contents.length === 0) return;
     setState(prev => ({ ...prev, isRefactoring: true }));
     try {
       const { getAIRefactor } = await import("@/lib/energy");
-      const refactored = await getAIRefactor(state.content);
+      const refactored = await getAIRefactor(state.contents[0]);
       setState(prev => ({ ...prev, refactored, isRefactoring: false }));
     } catch (e) {
       setError("AI Refactoring failed.");
@@ -114,34 +130,34 @@ export default function AnalyzePage() {
   };
 
   const runCode = () => {
-    setState(prev => ({ ...prev, isRunning: true, runResults: ["Initializing Sandbox Environment...", "Checking Runtime Compatibility..."] }));
+    setState(prev => ({ ...prev, isRunning: true, runResults: ["Initializing Multi-Object Sandbox...", `Linking ${state.files.length} Resources...`] }));
     
     setTimeout(() => {
       try {
         const logs: string[] = [];
         const captureLog = (...args: any[]) => logs.push(args.map(a => String(a)).join(" "));
         
-        // Simple sandbox for JS
-        const sandbox = new Function("console", state.content);
+        // Execute main file (index 0)
+        const sandbox = new Function("console", state.contents[0]);
         sandbox({ log: captureLog, error: captureLog, warn: captureLog });
         
         setState(prev => ({ 
           ...prev, 
           isRunning: false, 
-          runResults: [...prev.runResults, "✅ Sequence Success.", ...logs] 
+          runResults: [...prev.runResults, "✅ Primary Entry Success.", ...logs] 
         }));
       } catch (e: any) {
         setState(prev => ({ 
           ...prev, 
           isRunning: false, 
-          runResults: [...prev.runResults, "❌ Sequence Runtime Error:", e.message] 
+          runResults: [...prev.runResults, "❌ Runtime Error in Entry:", e.message] 
         }));
       }
-    }, 1200);
+    }, 1500);
   };
 
   const handleClear = () => {
-    setState((prev) => ({ ...prev, file: null, content: "", metrics: null, review: null, refactored: null, runResults: [] }));
+    setState((prev) => ({ ...prev, files: [], contents: [], metrics: null, review: null, refactored: null, runResults: [] }));
     setError(null);
   };
 
@@ -154,123 +170,116 @@ export default function AnalyzePage() {
   }
 
   return (
-    <div className="py-24 bg-[#0a0a0a] min-h-screen selection:bg-emerald-500 selection:text-white">
+    <div className="py-24 bg-[#0a0a0a] min-h-screen overflow-x-hidden">
       <div className="container mx-auto px-4 max-w-7xl">
         
-        <div className="flex flex-col md:flex-row gap-12 mb-32">
-          {/* Header & Controls */}
+        <div className="flex flex-col md:flex-row gap-16 mb-24 relative">
           <div className="flex-1 space-y-12">
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div className="flex items-center gap-3">
-                <div className="h-px w-8 bg-emerald-500" />
-                <h2 className="text-xs font-mono text-emerald-500 uppercase tracking-[0.5em]">Protocol.Analyze_v2</h2>
+                <div className="h-px w-10 bg-emerald-500" />
+                <h2 className="text-[10px] font-mono text-emerald-500 uppercase tracking-[0.5em]">Repository.Audit_v3</h2>
               </div>
-              <h1 className="text-5xl lg:text-8xl font-black tracking-tighter uppercase leading-[0.8]">
-                Audit <br /> The <span className="text-white/20 italic">Energy</span>.
+              <h1 className="text-6xl lg:text-[7rem] font-black tracking-tighter uppercase leading-[0.8] text-white">
+                Green <br /> Your <br /> <span className="text-emerald-500 italic">Codebase</span>_
               </h1>
-              <p className="text-gray-500 font-medium max-w-xl text-lg leading-relaxed lowercase first-letter:uppercase">
-                Analyze computational footprints across global grids and hardware profiles. Implement AI-driven refactoring for a net-zero future.
+              <p className="text-gray-500 font-medium max-w-lg text-lg leading-relaxed lowercase first-letter:uppercase">
+                Perform multi-file computational audits. Toggle global grid parameters and hardware profiles to simulate the full scope of your software footprint.
               </p>
             </div>
 
-            {/* Context Selectors */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div className="p-6 rounded-3xl bg-white/[0.02] border border-white/5 space-y-4">
-                <div className="flex items-center gap-2 text-[10px] font-mono text-gray-500 uppercase tracking-widest">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="p-6 rounded-[2rem] bg-white/[0.02] border border-white/5 space-y-4 group hover:bg-white/[0.04] transition-all">
+                <div className="flex items-center gap-2 text-[10px] font-mono text-gray-400 uppercase tracking-widest">
                   <Globe size={14} className="text-emerald-500" />
-                  Target_Region
+                  Grid_Location
                 </div>
                 <select 
                   value={state.region}
                   onChange={(e) => setState(prev => ({ ...prev, region: e.target.value }))}
-                  className="w-full bg-black/50 border border-white/10 rounded-2xl px-4 py-3 text-sm focus:ring-1 focus:ring-emerald-500 outline-none text-gray-300"
+                  className="w-full bg-transparent border-none p-0 text-xl font-black uppercase tracking-tighter focus:ring-0 text-white cursor-pointer"
                 >
                   {Object.entries(REGIONS).map(([id, { label }]) => (
-                    <option key={id} value={id}>{label}</option>
+                    <option key={id} value={id} className="bg-black text-[14px] uppercase">{label}</option>
                   ))}
                 </select>
               </div>
 
-              <div className="p-6 rounded-3xl bg-white/[0.02] border border-white/5 space-y-4">
-                <div className="flex items-center gap-2 text-[10px] font-mono text-gray-500 uppercase tracking-widest">
+              <div className="p-6 rounded-[2rem] bg-white/[0.02] border border-white/5 space-y-4 group hover:bg-white/[0.04] transition-all">
+                <div className="flex items-center gap-2 text-[10px] font-mono text-gray-400 uppercase tracking-widest">
                   <Cpu size={14} className="text-amber-500" />
-                  Execution_Profile
+                  Target_Hardware
                 </div>
                 <select 
                   value={state.hardware}
                   onChange={(e) => setState(prev => ({ ...prev, hardware: e.target.value }))}
-                  className="w-full bg-black/50 border border-white/10 rounded-2xl px-4 py-3 text-sm focus:ring-1 focus:ring-emerald-500 outline-none text-gray-300"
+                  className="w-full bg-transparent border-none p-0 text-xl font-black uppercase tracking-tighter focus:ring-0 text-white cursor-pointer"
                 >
                   {Object.entries(HARDWARE_PROFILES).map(([id, { label }]) => (
-                    <option key={id} value={id}>{label}</option>
+                    <option key={id} value={id} className="bg-black text-[14px] uppercase">{label}</option>
                   ))}
                 </select>
               </div>
             </div>
           </div>
 
-          <div className="flex-1">
+          <div className="flex-1 relative">
             <FileUpload
-              onFileAccepted={handleFileAccepted}
+              onFilesAccepted={handleFilesAccepted}
               isLoading={state.isAnalyzing}
-              acceptedFile={state.file}
+              acceptedFiles={state.files}
               onClear={handleClear}
             />
           </div>
         </div>
 
         {error && (
-          <div className="mb-12 p-8 rounded-3xl bg-red-500/5 border border-red-500/20 text-red-500 font-mono text-xs text-center uppercase tracking-widest">
-            {error}
+          <div className="mb-12 p-10 rounded-[2.5rem] bg-red-500/5 border border-red-500/10 text-red-500 font-mono text-[10px] text-center uppercase tracking-[0.4em]">
+             System_Halt: {error}
           </div>
         )}
 
         {state.metrics && state.review && !state.isAnalyzing && (
-          <div className="space-y-12 animate-in fade-in slide-in-from-bottom-10 duration-1000">
+          <div className="space-y-16 animate-in fade-in slide-in-from-bottom-5 duration-1000">
             
-            {/* Analysis Header */}
-            <div className="flex flex-col lg:flex-row items-center justify-between gap-8 pb-12 border-b border-white/5">
-              <h2 className="text-3xl font-black flex items-center gap-4 text-white tracking-tighter uppercase italic">
-                <Sparkles className="w-8 h-8 text-emerald-500" />
-                Operational_Ledger
-              </h2>
+            <div className="flex flex-col lg:flex-row items-center justify-between gap-10 py-12 border-y border-white/5">
+              <div className="space-y-2">
+                <h2 className="text-4xl font-black flex items-center gap-4 text-white tracking-tighter uppercase">
+                  Audit_Summary_Report
+                </h2>
+                <p className="text-[10px] font-mono text-gray-500 uppercase tracking-widest">Verified across {state.files.length} active objects</p>
+              </div>
               <div className="flex flex-wrap items-center justify-center gap-4">
-                <div className="flex items-center gap-2 px-6 py-3 rounded-full bg-white/[0.03] border border-white/10 text-[10px] font-mono text-gray-500 uppercase tracking-widest">
-                  <Globe className="w-4 h-4 text-emerald-500" />
-                  Grid: {state.metrics.gridIntensity} gCO2e
-                </div>
                 <button
                   onClick={runCode}
                   disabled={state.isRunning}
-                  className="flex items-center gap-3 px-8 py-3 rounded-full bg-white text-black font-black hover:bg-emerald-500 hover:text-white transition-all uppercase tracking-tighter disabled:opacity-50"
+                  className="flex items-center gap-4 px-10 py-4 rounded-full bg-white text-black font-black hover:bg-emerald-500 hover:text-white transition-all uppercase tracking-tighter disabled:opacity-50"
                 >
                   {state.isRunning ? <Loader2 size={16} className="animate-spin" /> : <Play size={16} />}
-                  Run_Sequence
+                  Execute_Sandbox
                 </button>
-                <Link
-                  href="/dashboard"
-                  className="flex items-center gap-3 px-8 py-3 rounded-full border border-white/10 text-white font-black hover:bg-white hover:text-black transition-all uppercase tracking-tighter"
+                <button 
+                  onClick={handleClear} 
+                  className="p-4 rounded-full border border-white/10 text-gray-500 hover:text-white hover:bg-white/5 transition-all"
                 >
-                  <BarChart3 size={16} />
-                  View_Vault
-                </Link>
-                <button onClick={handleClear} className="p-3 rounded-full border border-white/10 text-gray-500 hover:text-white transition-all">
-                  <RotateCcw size={18} />
+                  <RotateCcw size={20} />
                 </button>
               </div>
             </div>
 
-            {/* Project Runner Console */}
             {state.runResults.length > 0 && (
-              <div className="rounded-[2.5rem] border border-emerald-500/20 bg-emerald-500/[0.02] p-8 space-y-6">
-                <div className="flex items-center gap-3 border-b border-emerald-500/10 pb-4">
-                  <Terminal size={14} className="text-emerald-500" />
-                  <span className="text-[10px] font-mono uppercase tracking-[0.3em] text-emerald-500/70">Console.Sandbox_Out</span>
+              <div className="rounded-[3rem] border border-emerald-500/20 bg-emerald-500/[0.02] p-12 space-y-8 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-12 opacity-5 pointer-events-none group-hover:scale-110 transition-transform duration-1000">
+                  <Terminal size={200} className="text-emerald-500" />
                 </div>
-                <div className="font-mono text-xs space-y-2 uppercase opacity-80 max-h-40 overflow-y-auto">
+                <div className="flex items-center gap-4 border-b border-emerald-500/10 pb-6">
+                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-xs font-mono uppercase tracking-[0.5em] text-emerald-500 font-bold">Realtime.Console_Output</span>
+                </div>
+                <div className="font-mono text-[11px] space-y-4 uppercase opacity-80 max-h-64 overflow-y-auto custom-scrollbar pr-4">
                   {state.runResults.map((line, i) => (
-                    <div key={i} className={cn("flex items-start gap-4", line.startsWith('✅') ? 'text-emerald-500 font-bold' : line.startsWith('❌') ? 'text-red-500' : 'text-gray-400')}>
-                      <span className="opacity-30">{i+1}.</span>
+                    <div key={i} className={cn("flex items-start gap-6 border-l border-white/5 pl-6", line.startsWith('✅') ? 'text-emerald-500 font-bold' : line.startsWith('❌') ? 'text-red-500' : 'text-gray-400')}>
+                      <span className="text-[8px] opacity-20 font-bold">{String(i+1).padStart(2, '0')}</span>
                       {line}
                     </div>
                   ))}
@@ -281,88 +290,58 @@ export default function AnalyzePage() {
             <MetricsDisplay metrics={state.metrics} />
 
             <div className="grid lg:grid-cols-2 gap-12">
-              <div className="p-10 rounded-[3rem] border border-white/10 bg-white/[0.02] backdrop-blur-3xl relative overflow-hidden group">
-                <div className="absolute top-0 right-0 p-12 opacity-5 pointer-events-none group-hover:rotate-12 transition-transform duration-700">
-                  <TrendingUp size={120} />
-                </div>
-                <h3 className="text-[10px] font-mono font-bold mb-12 text-gray-500 uppercase tracking-widest">Efficiency.Metric_Analysis</h3>
+              <div className="p-12 rounded-[3.5rem] border border-white/10 bg-white/[0.02] backdrop-blur-3xl relative overflow-hidden">
+                <h3 className="text-[10px] font-mono font-bold mb-12 text-gray-500 uppercase tracking-[0.5em]">Efficiency.Trajectory</h3>
                 <EnergyScoreChart score={state.review.score} />
-                <div className="mt-12 flex items-center justify-between text-[10px] font-mono text-gray-500 uppercase tracking-widest pt-8 border-t border-white/5">
-                  <span>Logic: Deterministic AST</span>
-                  <span>Accuracy: High_Precision</span>
-                </div>
               </div>
 
-              <div className="space-y-6">
+              <div className="space-y-8">
                 <AIReviewCard review={state.review} />
                 
-                {/* Refactor Trigger */}
                 {!state.refactored ? (
                   <button
                     onClick={handleRefactor}
                     disabled={state.isRefactoring}
-                    className="w-full p-8 rounded-[2.5rem] border border-emerald-500/20 bg-emerald-500/5 hover:bg-emerald-500/10 transition-all group flex items-center justify-between text-left"
+                    className="w-full p-10 rounded-[3rem] border border-emerald-500/20 bg-emerald-500/5 hover:bg-emerald-500/10 transition-all group flex items-center justify-between text-left relative overflow-hidden"
                   >
-                    <div className="space-y-2">
-                      <p className="text-emerald-500 font-black text-xl tracking-tighter uppercase">AI_Refactor_Engine</p>
-                      <p className="text-emerald-500/50 text-[10px] uppercase tracking-widest font-mono">Transform code for net-zero execution</p>
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 blur-[80px] group-hover:bg-emerald-500/20 transition-all" />
+                    <div className="space-y-3 relative z-10">
+                      <p className="text-emerald-500 font-black text-2xl tracking-tighter uppercase italic">Refactor_Force</p>
+                      <p className="text-emerald-500/50 text-[10px] uppercase tracking-widest font-mono">Rewrite entry point for maximum efficiency</p>
                     </div>
                     {state.isRefactoring ? (
                       <Loader2 className="animate-spin text-emerald-500" />
                     ) : (
-                      <Sparkles className="text-emerald-500 group-hover:scale-125 transition-transform" />
+                      <Sparkles size={28} className="text-emerald-500 group-hover:scale-125 transition-transform" />
                     )}
                   </button>
                 ) : (
-                   <div className="p-8 rounded-[2.5rem] border border-emerald-500/30 bg-emerald-500/5 space-y-6">
-                      <div className="flex items-center justify-between">
-                         <div className="flex items-center gap-3 text-emerald-500">
-                            <CheckCircle2 size={16} />
-                            <span className="text-xs font-black uppercase tracking-widest text-emerald-500">Optimization_Applied</span>
+                   <div className="p-10 rounded-[3.5rem] border border-emerald-500/30 bg-emerald-500/5 space-y-8 animate-in zoom-in-95 duration-500">
+                      <div className="flex items-center justify-between border-b border-emerald-500/10 pb-6">
+                         <div className="flex items-center gap-4 text-emerald-500">
+                            <CheckCircle2 size={20} />
+                            <span className="text-sm font-black uppercase tracking-widest text-emerald-500 underline underline-offset-8">Optimization_Locked</span>
                          </div>
                          <button 
                           onClick={() => setState(prev => ({ ...prev, refactored: null }))}
-                          className="text-[10px] font-mono text-emerald-500 underline uppercase hover:text-white"
-                         >Reset_View</button>
+                          className="text-[10px] font-mono text-emerald-500/50 uppercase hover:text-white transition-colors"
+                         >Close_Terminal</button>
                       </div>
-                      <div className="bg-black/80 rounded-2xl p-6 font-mono text-[10px] leading-relaxed text-emerald-500/80 overflow-x-auto border border-emerald-500/10 max-h-60">
-                        <pre>{state.refactored.code}</pre>
+                      <div className="bg-[#050505] rounded-3xl p-8 font-mono text-[11px] leading-relaxed text-emerald-500/90 overflow-x-auto border border-white/5 max-h-80 custom-scrollbar shadow-inner">
+                        <pre className="selection:bg-emerald-500/20">{state.refactored.code}</pre>
                       </div>
-                      <p className="text-xs text-emerald-400 font-medium lowercase first-letter:uppercase italic leading-relaxed">
-                        &quot;{state.refactored.explanation}&quot;
-                      </p>
+                      <div className="space-y-4">
+                         <div className="flex items-center gap-2">
+                           <Zap size={10} className="text-emerald-500" />
+                           <span className="text-[10px] font-mono text-emerald-500/50 uppercase tracking-widest">Architect.Notes</span>
+                         </div>
+                         <p className="text-[13px] text-gray-400 font-medium italic leading-relaxed lowercase first-letter:uppercase">
+                           &quot;{state.refactored.explanation}&quot;
+                         </p>
+                      </div>
                    </div>
                 )}
               </div>
-            </div>
-
-            {/* Bottom Insight */}
-            <div className="p-12 rounded-[3.5rem] bg-white/[0.03] border border-white/5 relative overflow-hidden">
-               <div className="absolute top-0 left-0 w-1.5 h-full bg-emerald-500" />
-               <div className="grid md:grid-cols-2 gap-12 items-center">
-                  <div className="space-y-6">
-                    <h3 className="text-2xl font-black uppercase italic text-white flex items-center gap-4">
-                      <Globe className="text-emerald-500" />
-                      Carbon_Aware Intelligence
-                    </h3>
-                    <p className="text-gray-400 font-medium text-lg leading-relaxed">
-                      By prioritizing <span className="text-white underline decoration-emerald-500 underline-offset-8 decoration-2">{REGIONS[state.region as keyof typeof REGIONS].label}</span> and <span className="text-white underline decoration-emerald-500 underline-offset-8 decoration-2">{HARDWARE_PROFILES[state.hardware as keyof typeof HARDWARE_PROFILES].label}</span>, you are actively decreasing simulated scope-3 emissions.
-                    </p>
-                  </div>
-                  <div className="bg-black/50 p-8 rounded-3xl border border-white/5 font-mono text-[10px] text-gray-500 uppercase tracking-widest space-y-4">
-                      <div className="flex justify-between">
-                        <span>Transmission_Draw:</span>
-                        <span className="text-white">{(state.metrics.estimatedEnergy * 0.1).toFixed(4)} kWh</span>
-                      </div>
-                      <div className="flex justify-between font-bold text-emerald-500">
-                        <span>Renewable_Potential:</span>
-                        <span>{state.region === 'nordics' ? 'EXCELLENT' : 'VARIABLE'}</span>
-                      </div>
-                      <div className="h-1 bg-white/5 rounded-full overflow-hidden">
-                        <div className="h-full bg-emerald-500 w-[70%]" />
-                      </div>
-                  </div>
-               </div>
             </div>
 
           </div>
