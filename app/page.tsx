@@ -1,171 +1,146 @@
-import Link from "next/link";
-import { Upload, Zap, Leaf, BarChart3, Sparkles, ArrowRight, CheckCircle } from "lucide-react";
+"use client";
 
-const features = [
-  {
-    icon: Upload,
-    title: "Upload Your Code",
-    description: "Drag and drop any code file. We support JavaScript, TypeScript, Python, Java, Rust, Go, and more.",
-  },
-  {
-    icon: Zap,
-    title: "Instant Analysis",
-    description: "Get immediate estimates of your code's energy consumption and carbon footprint.",
-  },
-  {
-    icon: Sparkles,
-    title: "AI-Powered Insights",
-    description: "Receive intelligent recommendations to optimize your code for environmental efficiency.",
-  },
-  {
-    icon: BarChart3,
-    title: "Visual Dashboard",
-    description: "Track your code's impact with beautiful, real-time visualizations and metrics.",
-  },
-];
+import { useRef, useEffect } from "react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useGSAP } from "@gsap/react";
+import { ArrowDown } from "lucide-react";
 
-const benefits = [
-  "Reduce your software's carbon footprint",
-  "Identify energy-intensive code patterns",
-  "Get actionable optimization tips",
-  "Track improvements over time",
-  "Contribute to sustainable development",
-  "Free and open source",
-];
+if (typeof window !== "undefined") {
+  gsap.registerPlugin(ScrollTrigger, useGSAP);
+}
 
 export default function Home() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const textRef = useRef<HTMLHeadingElement>(null);
+
+  useGSAP(() => {
+    // Reveal Text Animation
+    const words = textRef.current?.querySelectorAll(".word");
+    if (words) {
+      gsap.fromTo(words,
+        { y: 100, opacity: 0, rotateX: -90 },
+        {
+          y: 0,
+          opacity: 1,
+          rotateX: 0,
+          stagger: 0.05,
+          duration: 1.2,
+          ease: "power4.out",
+          delay: 0.2
+        }
+      );
+    }
+
+    // Parallax Effect on Scroll
+    gsap.to(textRef.current, {
+      y: 200,
+      ease: "none",
+      scrollTrigger: {
+        trigger: containerRef.current,
+        start: "top top",
+        end: "bottom top",
+        scrub: true
+      }
+    });
+
+  }, { scope: containerRef });
+
+  const manifestoText = "IN ORDER TO BUILD, DEVELOP, IMPACT, CHANGE, DESIGN, BUILD THE FUTURE ONE LINE AT A TIME.";
+  const words = manifestoText.split(" ");
+
   return (
-    <div className="flex flex-col">
-      <section className="relative overflow-hidden py-20 sm:py-32">
-        <div className="absolute inset-0 -z-10">
-          <div className="absolute inset-0 bg-gradient-to-br from-emerald-50 via-white to-teal-50 dark:from-gray-900 dark:via-gray-950 dark:to-emerald-950/20" />
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl" />
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl" />
+    <div ref={containerRef} className="bg-[#0a0a0a] min-h-[200vh] text-white font-sans selection:bg-white selection:text-black">
+
+      {/* BACKGROUND GRAIN/NOISE */}
+      <div className="fixed inset-0 bg-noise pointer-events-none opacity-40 z-0 mix-blend-overlay" />
+
+      {/* HERO SECTION */}
+      <section className="relative h-screen w-full flex flex-col justify-center items-center px-4 overflow-hidden">
+
+        {/* Background Image */}
+        <div className="absolute inset-0 z-0">
+          <img src="/hero-bg.png" alt="Landscape" className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-black/30" /> {/* Overlay */}
         </div>
 
-        <div className="container mx-auto px-4 text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-sm font-medium mb-8">
-            <Leaf className="w-4 h-4" />
-            Sustainable Software Development
-          </div>
-
-          <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold tracking-tight mb-6">
-            Understand Your Code's
-            <br />
-            <span className="gradient-text">Environmental Impact</span>
+        {/* Main Typography */}
+        <div className="relative z-10 max-w-7xl mx-auto text-center [perspective:1000px] px-2">
+          <h1 ref={textRef} className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-black leading-[0.9] tracking-tighter uppercase text-white drop-shadow-xl">
+            {words.map((word, i) => {
+              const isBloody = i >= 8 && i <= 10; // "BUILD THE FUTURE"
+              return (
+                <span
+                  key={i}
+                  className={`word inline-block origin-bottom [transform-style:preserve-3d] mx-[0.5vw] ${isBloody ? 'text-red-600' : ''}`}
+                >
+                  {word}
+                </span>
+              );
+            })}
           </h1>
-
-          <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto mb-10">
-            CO2DE helps developers instantly analyze the energy consumption and CO₂ footprint of their code,
-            with AI-powered insights for building greener software.
-          </p>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link
-              href="/analyze"
-              className="group flex items-center gap-2 px-8 py-4 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-semibold text-lg transition-all shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40"
-            >
-              <Upload className="w-5 h-5" />
-              Analyze Your Code
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </Link>
-            <Link
-              href="/about"
-              className="flex items-center gap-2 px-8 py-4 rounded-xl border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 font-semibold text-lg transition-all"
-            >
-              Learn More
-            </Link>
-          </div>
-
-          <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-8 max-w-3xl mx-auto">
-            {[
-              { value: "100+", label: "File Types" },
-              { value: "< 5s", label: "Analysis Time" },
-              { value: "Free", label: "Forever" },
-              { value: "OSS", label: "Open Source" },
-            ].map((stat) => (
-              <div key={stat.label} className="text-center">
-                <p className="text-3xl font-bold text-emerald-500">{stat.value}</p>
-                <p className="text-sm text-gray-500">{stat.label}</p>
-              </div>
-            ))}
-          </div>
         </div>
+
+        {/* Scroll Indicator */}
+        <div className="absolute bottom-12 flex flex-col items-center gap-2 text-white/80 animate-bounce z-20">
+          <span className="text-xs font-mono uppercase tracking-widest">Scroll</span>
+          <ArrowDown size={16} />
+        </div>
+
       </section>
 
-      <section className="py-20 bg-white dark:bg-gray-950">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4">How It Works</h2>
-            <p className="text-gray-600 dark:text-gray-400 max-w-xl mx-auto">
-              Four simple steps to understand and reduce your code's environmental footprint
+      {/* PRODUCT FEATURES SECTION */}
+      <section className="relative z-10 w-full max-w-6xl mx-auto py-32 px-6">
+
+        <div className="grid md:grid-cols-2 gap-16 mb-24">
+          <div className="space-y-6">
+            <h2 className="text-sm font-mono text-gray-500 uppercase tracking-widest">01 — Audit</h2>
+            <h3 className="text-4xl font-bold text-white">Historical Resource Audit & Reporting</h3>
+            <p className="text-lg text-gray-400 leading-relaxed">
+              Sustainability efforts require accountability. How can organizations access detailed historical data on their energy and resource consumption for audits and long-term planning?
             </p>
           </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {features.map((feature, index) => (
-              <div
-                key={feature.title}
-                className="relative p-6 rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 hover:border-emerald-500/50 transition-all group"
-              >
-                <div className="absolute top-4 right-4 text-4xl font-bold text-gray-100 dark:text-gray-800 group-hover:text-emerald-500/20 transition-colors">
-                  {index + 1}
-                </div>
-                <div className="p-3 rounded-xl bg-emerald-500/10 w-fit mb-4">
-                  <feature.icon className="w-6 h-6 text-emerald-500" />
-                </div>
-                <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">{feature.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="py-20 bg-gradient-to-br from-emerald-500 to-teal-600">
-        <div className="container mx-auto px-4">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div>
-              <h2 className="text-3xl sm:text-4xl font-bold text-white mb-6">
-                Why Green Software Matters
-              </h2>
-              <p className="text-emerald-100 mb-8 max-w-2xl">
-                The tech industry accounts for approximately 2-4% of global carbon emissions.
-                By making our code more efficient, we can collectively make a significant impact
-                on reducing our environmental footprint. Software energy use is growing 9% annually,
-                and every optimization counts.
-              </p>
-              <ul className="grid sm:grid-cols-2 gap-4">
-                {benefits.map((benefit) => (
-                  <li key={benefit} className="flex items-center gap-3 text-white">
-                    <CheckCircle className="w-5 h-5 text-emerald-200 shrink-0" />
-                    <span className="text-sm font-medium">{benefit}</span>
-                  </li>
-                ))}
-              </ul>
+          <div className="p-8 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-sm shadow-xl flex items-center justify-center">
+            {/* Visual placeholder or icon */}
+            <div className="w-full h-48 bg-white/5 rounded-xl flex items-center justify-center">
+              <span className="text-gray-400 font-mono text-xl">Audit_Log_v2.json</span>
             </div>
-
           </div>
         </div>
+
+        <div className="grid md:grid-cols-2 gap-16 mb-24 md:flex-row-reverse">
+          <div className="space-y-6 md:order-2">
+            <h2 className="text-sm font-mono text-gray-500 uppercase tracking-widest">02 — Profile</h2>
+            <h3 className="text-4xl font-bold text-white">Energy Profiling for Functions</h3>
+            <p className="text-lg text-gray-400 leading-relaxed">
+              Developers often write code without knowing which parts consume excessive energy. How can energy-intensive functions be identified and made visible for optimization?
+            </p>
+          </div>
+          <div className="md:order-1 p-8 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-sm shadow-xl flex items-center justify-center">
+            <div className="w-full h-48 bg-white/5 rounded-xl flex items-center justify-center">
+              <span className="text-gray-400 font-mono text-xl">Function_Trace()</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-16">
+          <div className="space-y-6">
+            <h2 className="text-sm font-mono text-gray-500 uppercase tracking-widest">03 — Simulate</h2>
+            <h3 className="text-4xl font-bold text-white">Code Execution Carbon Impact Simulator</h3>
+            <p className="text-lg text-gray-400 leading-relaxed">
+              Software consumes resources differently depending on workload. How can developers estimate the environmental impact of their code and explore alternatives to reduce it?
+            </p>
+          </div>
+          <div className="p-8 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-sm shadow-xl flex items-center justify-center">
+            <div className="w-full h-48 bg-white/5 rounded-xl flex items-center justify-center">
+              <span className="text-gray-400 font-mono text-xl">Simulation_Active...</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="h-24" />
       </section>
 
-      <section className="py-20 bg-white dark:bg-gray-950">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl sm:text-4xl font-bold mb-4">
-            Ready to Make Your Code Greener?
-          </h2>
-          <p className="text-gray-600 dark:text-gray-400 max-w-xl mx-auto mb-8">
-            Start analyzing your code today. It's free, fast, and helps the planet.
-          </p>
-          <Link
-            href="/analyze"
-            className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-semibold text-lg transition-all shadow-lg shadow-emerald-500/25"
-          >
-            <Upload className="w-5 h-5" />
-            Start Analyzing
-          </Link>
-        </div>
-      </section>
     </div>
   );
 }
