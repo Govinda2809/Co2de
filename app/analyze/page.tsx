@@ -4,17 +4,10 @@ import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { FileUpload } from "@/components/upload";
-<<<<<<< HEAD
-import { MetricsDisplay, EnergyScoreChart, AIReviewCard, GridTimeline, RegionalHeatmap, HardwareThermalIndex, TelemetryStream, CarbonProjections } from "@/components/dashboard";
-import { calculateEnergyMetrics, REGIONS, HARDWARE_PROFILES, getGridIntensity, getAIReview, getAIRefactor } from "@/lib/energy";
-import { AnalysisItemSchema, AIReview, Geolocation } from "@/lib/schemas";
-import { Sparkles, RotateCcw, Loader2, Zap, TrendingUp, BarChart3, Globe, Cpu, Terminal, CheckCircle2, FileStack, Save, Copy, Check, ShieldCheck, Rocket, ArrowRight, BrainCircuit, Activity, Eye, EyeOff } from "lucide-react";
-=======
 import { MetricsDisplay, EnergyScoreChart, AIReviewCard, GridTimeline } from "@/components/dashboard";
 import { calculateEnergyMetrics, REGIONS, HARDWARE_PROFILES, getGridIntensity, getAIReview, getAIRefactor } from "@/lib/energy";
-import { AnalysisItemSchema, AIReview } from "@/lib/schemas";
-import { Sparkles, RotateCcw, Loader2, Zap, TrendingUp, BarChart3, Globe, Cpu, Play, Terminal, CheckCircle2, FileStack, FileCode, Info, Save, Copy, Check, ShieldCheck, Box, Plus, X, Activity, ArrowRight } from "lucide-react";
->>>>>>> ff774b2d99b59d7ed5c43a1848ab38acfd22ffa8
+import { AnalysisItemSchema, AIReview, Geolocation } from "@/lib/schemas";
+import { Sparkles, RotateCcw, Loader2, Zap, TrendingUp, BarChart3, Globe, Cpu, Terminal, CheckCircle2, FileStack, Save, Copy, Check, ShieldCheck, Box, Plus, X, Activity, ArrowRight } from "lucide-react";
 import { databases, DATABASE_ID, COLLECTION_ID, ID } from "@/lib/appwrite";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
@@ -42,11 +35,8 @@ interface AnalysisState {
   isSaving: boolean;
   isSaved: boolean;
   lastSavedId: string | null;
-<<<<<<< HEAD
   geolocation: Geolocation | null;
-=======
   scopes: FeatureScope[];
->>>>>>> ff774b2d99b59d7ed5c43a1848ab38acfd22ffa8
 }
 
 export default function AnalyzePage() {
@@ -68,11 +58,8 @@ export default function AnalyzePage() {
     isSaving: false,
     isSaved: false,
     lastSavedId: null,
-<<<<<<< HEAD
     geolocation: null,
-=======
     scopes: [{ id: '1', name: 'Core_Service', code: '// Start architecting...\nfunction processData(input) {\n  return input.map(item => item * 2);\n}', metrics: null }]
->>>>>>> ff774b2d99b59d7ed5c43a1848ab38acfd22ffa8
   });
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -156,7 +143,7 @@ export default function AnalyzePage() {
       const t = setTimeout(handler, 400);
       return () => clearTimeout(t);
     }
-  }, [state.scopes.map(s => s.code).join('|'), state.region, state.hardware, state.mode]);
+  }, [state.scopes, state.region, state.hardware, state.mode]);
 
   // Update metrics for UPLOAD mode on infra change
   useEffect(() => {
@@ -208,24 +195,16 @@ export default function AnalyzePage() {
         userId: user.$id,
         complexity: state.metrics.complexity,
         memPressure: state.metrics.memPressure,
-<<<<<<< HEAD
         lineCount: state.metrics.lineCount,
         region: state.region,
         hardwareProfile: state.hardware,
         gridIntensity: state.geolocation?.gridIntensity || state.metrics.gridIntensity,
         recursionDetected: state.metrics.recursionDetected,
-        optimizationDelta: state.refactored ? Math.max(0, ((state.review?.score || 0) - (state.refactored.metrics?.score || 0)) * -10) : undefined,
         language: state.metrics.language,
-        summary: state.review?.summary,
-        securityNotes: state.review?.securityNotes,
-        hotspots: state.review?.hotspots,
         clientCity: state.geolocation?.city,
         clientCountry: state.geolocation?.country,
         clientIp: state.geolocation?.ip,
         engineVersion: '5.0.0-delta'
-=======
-        lineCount: state.metrics.lineCount
->>>>>>> ff774b2d99b59d7ed5c43a1848ab38acfd22ffa8
       };
       const doc = await databases.createDocument(DATABASE_ID, COLLECTION_ID, ID.unique(), AnalysisItemSchema.parse(payload));
       setState(p => ({ ...p, isSaving: false, isSaved: true, lastSavedId: doc.$id }));
@@ -253,7 +232,7 @@ export default function AnalyzePage() {
     } catch (e) { setError("AI Refactor Engine Offline."); setState(p => ({ ...p, isRefactoring: false })); }
   };
 
-  if (authLoading) return <div className="min-h-screen bg-black flex items-center justify-center font-pixel text-emerald-500 animate-pulse text-2xl">LOADING_INTERFACE...</div>;
+  if (authLoading) return <div className="min-h-screen bg-black flex items-center justify-center font-mono text-emerald-500 animate-pulse text-xl">LOADING_INTERFACE...</div>;
 
   return (
     <div className="py-24 bg-black min-h-screen selection:bg-emerald-500/30 text-white font-mono">
@@ -269,7 +248,7 @@ export default function AnalyzePage() {
               key={m.id}
               onClick={() => setState(p => ({ ...p, mode: m.id, metrics: null, review: null }))}
               className={cn(
-                "flex items-center gap-4 px-8 py-4 font-pixel text-xs uppercase tracking-widest transition-all relative border-r-2 border-white/20 hover:bg-white/5",
+                "flex items-center gap-4 px-8 py-4 text-xs uppercase tracking-widest transition-all relative border-r-2 border-white/20 hover:bg-white/5",
                 state.mode === m.id ? "bg-emerald-900/20 text-emerald-400" : "text-gray-500"
               )}
             >
@@ -284,68 +263,54 @@ export default function AnalyzePage() {
           <div className="flex-1 space-y-12">
             <div className="space-y-6">
               <div className="flex items-center gap-3">
-                <div className="w-4 h-4 bg-emerald-500 animate-pulse pixel-border" />
-                <h2 className="text-xs font-pixel text-emerald-500 uppercase tracking-widest">{state.mode === 'upload' ? 'ARTIFACT_STREAM' : 'SYNTHESIS_ENGINE'}</h2>
+                <div className="w-4 h-4 bg-emerald-500 animate-pulse" />
+                <h2 className="text-xs text-emerald-500 uppercase tracking-widest">{state.mode === 'upload' ? 'ARTIFACT_STREAM' : 'SYNTHESIS_ENGINE'}</h2>
               </div>
-              <h1 className="text-4xl lg:text-6xl font-pixel uppercase leading-none text-white">
+              <h1 className="text-4xl lg:text-6xl uppercase leading-none text-white font-bold tracking-tight">
                 {state.mode === 'upload' ? 'AUDIT_CODE_' : 'SCULPT_IMPACT_'}
               </h1>
-              <p className="text-gray-500 font-mono text-sm max-w-lg leading-relaxed">
+              <p className="text-gray-500 text-sm max-w-lg leading-relaxed">
                 // {state.mode === 'upload' ? "Initialising static analysis sequence..." : "Real-time carbon feedback loop active."}
               </p>
             </div>
 
+            {/* Grid & Hardware Selectors */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-<<<<<<< HEAD
-              {/* Regional Power Grid - Auto-detected (Read-only) */}
-              <div className="p-8 rounded-[2.5rem] bg-white/[0.01] border border-white/5 space-y-6 relative overflow-hidden">
-                <div className="absolute top-4 right-4 flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[8px] font-mono text-emerald-500 uppercase tracking-widest font-black animate-in fade-in">
-                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  {state.geolocation ? "Live_IP" : "Detecting..."}
-=======
-              {[
-                { label: "GRID_REGION", icon: Globe, value: state.region, onChange: (v: any) => setState(p => ({ ...p, region: v })), options: REGIONS, color: "text-emerald-500" },
-                { label: "TDP_PROFILE", icon: Cpu, value: state.hardware, onChange: (v: any) => setState(p => ({ ...p, hardware: v })), options: HARDWARE_PROFILES, color: "text-amber-500" }
-              ].map((ctrl, i) => (
-                <div key={i} className="p-6 bg-black border-2 border-white/20 pixel-border space-y-4 hover:border-emerald-500/50 transition-colors">
-                  <div className="flex items-center gap-2 text-[10px] font-pixel text-gray-400 uppercase tracking-widest">
-                    <ctrl.icon size={14} className={ctrl.color} />
-                    {ctrl.label}
+              {/* Auto-detected Region */}
+              <div className="p-6 bg-black border-2 border-white/20 space-y-4 relative overflow-hidden">
+                {state.geolocation && (
+                  <div className="absolute top-4 right-4 flex items-center gap-2 px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 text-[8px] text-emerald-500 uppercase tracking-widest">
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    Live_IP
                   </div>
-                  <select value={ctrl.value} onChange={(e) => ctrl.onChange(e.target.value)} className="w-full bg-transparent border-none p-0 text-lg font-pixel uppercase focus:ring-0 text-white cursor-pointer appearance-none">
-                    {Object.entries(ctrl.options).map(([id, { label }]) => (
-                      <option key={id} value={id} className="bg-black text-sm font-mono">{label}</option>
-                    ))}
-                  </select>
->>>>>>> ff774b2d99b59d7ed5c43a1848ab38acfd22ffa8
-                </div>
-                <div className="flex items-center gap-2 text-[10px] font-mono text-gray-500 uppercase tracking-widest font-bold">
+                )}
+                <div className="flex items-center gap-2 text-[10px] text-gray-400 uppercase tracking-widest">
                   <Globe size={14} className="text-emerald-500" />
-                  Regional Power Grid
+                  GRID_REGION
                 </div>
-                <p className="text-2xl font-black uppercase tracking-tighter text-white">
+                <p className="text-lg uppercase text-white font-bold">
                   {state.geolocation ? (REGIONS as any)[state.region]?.label?.split(' (')[0] || state.region : "Detecting..."}
                 </p>
                 {state.geolocation?.city && (
-                  <p className="text-[10px] font-mono text-emerald-500/50 uppercase tracking-widest">
+                  <p className="text-[10px] text-emerald-500/50 uppercase tracking-widest">
                     📍 {state.geolocation.city}, {state.geolocation.country} • {state.geolocation.gridIntensity} gCO2e/kWh
                   </p>
                 )}
               </div>
 
-              {/* Hardware TDP Profile */}
-              <div className="p-8 rounded-[2.5rem] bg-white/[0.01] border border-white/5 space-y-6 hover:bg-white/[0.03] transition-all">
-                <div className="flex items-center gap-2 text-[10px] font-mono text-gray-500 uppercase tracking-widest font-bold">
+              {/* Hardware Profile */}
+              <div className="p-6 bg-black border-2 border-white/20 space-y-4 hover:border-amber-500/50 transition-colors">
+                <div className="flex items-center gap-2 text-[10px] text-gray-400 uppercase tracking-widest">
                   <Cpu size={14} className="text-amber-500" />
-                  Hardware TDP Profile
+                  TDP_PROFILE
                 </div>
                 <select 
                   value={state.hardware} 
-                  onChange={(e) => setState(p => ({...p, hardware: e.target.value}))} 
-                  className="w-full bg-transparent border-none p-0 text-2xl font-black uppercase tracking-tighter focus:ring-0 text-white cursor-pointer"
+                  onChange={(e) => setState(p => ({ ...p, hardware: e.target.value }))} 
+                  className="w-full bg-transparent border-none p-0 text-lg uppercase focus:ring-0 text-white cursor-pointer appearance-none font-bold"
                 >
                   {Object.entries(HARDWARE_PROFILES).map(([id, { label }]) => (
-                    <option key={id} value={id} className="bg-black text-[14px] uppercase font-mono">{label}</option>
+                    <option key={id} value={id} className="bg-black text-sm">{label}</option>
                   ))}
                 </select>
               </div>
@@ -358,27 +323,27 @@ export default function AnalyzePage() {
             ) : (
               <div className="space-y-6">
                 {state.scopes.map(s => (
-                  <div key={s.id} className="p-6 bg-black border-2 border-white/20 pixel-border space-y-6 animate-in slide-in-from-right-4 transition-all">
+                  <div key={s.id} className="p-6 bg-black border-2 border-white/20 space-y-6 animate-in slide-in-from-right-4 transition-all">
                     <div className="flex items-center justify-between border-b-2 border-white/10 pb-4">
                       <div className="flex items-center gap-4">
                         <Box size={16} className="text-emerald-500" />
-                        <input value={s.name} onChange={(e) => setState(p => ({ ...p, scopes: p.scopes.map(sc => sc.id === s.id ? { ...sc, name: e.target.value } : sc) }))} className="bg-transparent border-none p-0 text-xs font-pixel uppercase tracking-widest text-white focus:ring-0 w-full" />
+                        <input value={s.name} onChange={(e) => setState(p => ({ ...p, scopes: p.scopes.map(sc => sc.id === s.id ? { ...sc, name: e.target.value } : sc) }))} className="bg-transparent border-none p-0 text-xs uppercase tracking-widest text-white focus:ring-0 w-full" />
                       </div>
-                      <button onClick={() => removeScope(s.id)} className="p-2 hover:bg-red-900/20 text-gray-500 hover:text-red-500 transition-colors pixel-border border border-transparent hover:border-red-500"><X size={14} /></button>
+                      <button onClick={() => removeScope(s.id)} className="p-2 hover:bg-red-900/20 text-gray-500 hover:text-red-500 transition-colors border border-transparent hover:border-red-500"><X size={14} /></button>
                     </div>
-                    <textarea value={s.code} onChange={(e) => updateScope(s.id, e.target.value)} placeholder="// Write feature logic..." className="w-full h-40 bg-white/5 border-2 border-transparent focus:border-emerald-500 pixel-border p-4 font-mono text-xs text-emerald-400 placeholder-gray-700 resize-none custom-scrollbar outline-none" />
+                    <textarea value={s.code} onChange={(e) => updateScope(s.id, e.target.value)} placeholder="// Write feature logic..." className="w-full h-40 bg-white/5 border-2 border-transparent focus:border-emerald-500 p-4 text-xs text-emerald-400 placeholder-gray-700 resize-none custom-scrollbar outline-none" />
                     {s.metrics && (
                       <div className="flex items-center justify-between px-2 pt-2">
                         <div className="flex gap-6">
-                          <div className="flex items-center gap-2"><Zap size={10} className="text-amber-500" /><span className="text-[10px] font-pixel text-gray-400">{s.metrics.estimatedEnergy.toFixed(4)} KWH</span></div>
-                          <div className="flex items-center gap-2"><Activity size={10} className="text-blue-500" /><span className="text-[10px] font-pixel text-gray-400">O({s.metrics.complexity.toFixed(1)})</span></div>
+                          <div className="flex items-center gap-2"><Zap size={10} className="text-amber-500" /><span className="text-[10px] text-gray-400">{s.metrics.estimatedEnergy.toFixed(4)} KWH</span></div>
+                          <div className="flex items-center gap-2"><Activity size={10} className="text-blue-500" /><span className="text-[10px] text-gray-400">O({s.metrics.complexity.toFixed(1)})</span></div>
                         </div>
-                        <span className="text-[9px] font-pixel text-emerald-500 uppercase">SYNCED</span>
+                        <span className="text-[9px] text-emerald-500 uppercase">SYNCED</span>
                       </div>
                     )}
                   </div>
                 ))}
-                <button onClick={addScope} className="w-full p-6 border-2 border-dashed border-white/20 hover:border-emerald-500/50 hover:bg-emerald-900/10 transition-all flex items-center justify-center gap-4 text-gray-500 hover:text-emerald-400 text-xs font-pixel uppercase tracking-widest pixel-border">
+                <button onClick={addScope} className="w-full p-6 border-2 border-dashed border-white/20 hover:border-emerald-500/50 hover:bg-emerald-900/10 transition-all flex items-center justify-center gap-4 text-gray-500 hover:text-emerald-400 text-xs uppercase tracking-widest">
                   <Plus size={16} /> ADD_NEW_SCOPE
                 </button>
               </div>
@@ -390,22 +355,22 @@ export default function AnalyzePage() {
           <div className="space-y-20 animate-in fade-in slide-in-from-bottom-10 duration-500">
             <div className="flex flex-col lg:flex-row items-center justify-between gap-12 py-12 border-y-2 border-white/10 border-dashed">
               <div className="space-y-4 text-center lg:text-left">
-                <h2 className="text-4xl font-pixel text-white uppercase">SYNTHESIS_LIVE</h2>
+                <h2 className="text-4xl text-white uppercase font-bold">SYNTHESIS_LIVE</h2>
                 <div className="flex flex-wrap items-center justify-center lg:justify-start gap-6">
-                  <div className="flex items-center gap-2 px-3 py-1 bg-emerald-900/20 border-2 border-emerald-500/20 text-[10px] font-mono text-emerald-500 uppercase tracking-widest pixel-border">
+                  <div className="flex items-center gap-2 px-3 py-1 bg-emerald-900/20 border-2 border-emerald-500/20 text-[10px] text-emerald-500 uppercase tracking-widest">
                     <ShieldCheck size={12} className="animate-pulse" /> PROTOCOL_SAFE
                   </div>
-                  <p className="text-[10px] font-mono text-gray-500 uppercase tracking-widest">GRID_LOAD: {state.metrics.gridIntensity} gCO2e</p>
+                  <p className="text-[10px] text-gray-500 uppercase tracking-widest">GRID_LOAD: {state.metrics.gridIntensity} gCO2e</p>
                 </div>
               </div>
               <div className="flex flex-wrap items-center justify-center gap-4">
-                <button onClick={() => setState(p => ({ ...p, runResults: [], isRunning: false, metrics: null, review: null }))} className="p-4 border-2 border-white/20 hover:bg-white/10 transition-colors pixel-border"><RotateCcw size={20} className="text-gray-400" /></button>
-                <button onClick={commitToLedger} disabled={state.isSaving || state.isSaved} className={cn("flex items-center gap-4 px-8 py-4 font-pixel uppercase text-xs transition-all pixel-border border-2", state.isSaved ? "bg-emerald-500 text-black border-emerald-500 cursor-default" : "bg-black text-white border-white hover:bg-white hover:text-black")}>
+                <button onClick={() => setState(p => ({ ...p, runResults: [], isRunning: false, metrics: null, review: null }))} className="p-4 border-2 border-white/20 hover:bg-white/10 transition-colors"><RotateCcw size={20} className="text-gray-400" /></button>
+                <button onClick={commitToLedger} disabled={state.isSaving || state.isSaved} className={cn("flex items-center gap-4 px-8 py-4 uppercase text-xs transition-all border-2", state.isSaved ? "bg-emerald-500 text-black border-emerald-500 cursor-default" : "bg-black text-white border-white hover:bg-white hover:text-black")}>
                   {state.isSaving ? <Loader2 size={16} className="animate-spin" /> : state.isSaved ? <CheckCircle2 size={16} /> : <Save size={16} />}
                   {state.isSaved ? "SAVED_TO_VAULT" : "COMMIT_AUDIT"}
                 </button>
                 {state.isSaved && (
-                  <button onClick={() => navigator.clipboard.writeText(`![CO2DE Grade](${window.location.origin}/api/badge/${state.lastSavedId})`).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000) })} className="flex items-center gap-4 px-8 py-4 bg-emerald-900/20 border-2 border-emerald-500/20 text-emerald-500 font-pixel uppercase text-xs transition-all pixel-border">
+                  <button onClick={() => navigator.clipboard.writeText(`![CO2DE Grade](${window.location.origin}/api/badge/${state.lastSavedId})`).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000) })} className="flex items-center gap-4 px-8 py-4 bg-emerald-900/20 border-2 border-emerald-500/20 text-emerald-500 uppercase text-xs transition-all">
                     {copied ? <Check size={16} /> : <Copy size={16} />} {copied ? "COPIED" : "BADGE"}
                   </button>
                 )}
@@ -414,86 +379,16 @@ export default function AnalyzePage() {
 
             <MetricsDisplay metrics={state.metrics} />
 
-<<<<<<< HEAD
-            {/* Carbon Projections */}
-            <CarbonProjections 
-              metrics={{
-                estimatedEnergy: state.metrics.estimatedEnergy,
-                estimatedCO2: state.metrics.estimatedCO2,
-                gridIntensity: state.geolocation?.gridIntensity || state.metrics.gridIntensity,
-              }}
-              executionsPerDay={100}
-            />
-
-            <div className="grid lg:grid-cols-3 gap-10">
-               <div className="lg:col-span-2 space-y-10">
-                  <div className="grid grid-cols-1 md:grid-cols-5 gap-10">
-                    <div className="md:col-span-3">
-                       <RegionalHeatmap 
-                         selectedRegion={state.region} 
-                         onRegionDetected={(region, geo) => {
-                           setState(p => ({ ...p, region, geolocation: geo }));
-                         }}
-                       />
-                    </div>
-                    <div className="md:col-span-2">
-                       <HardwareThermalIndex selectedHardware={state.hardware} complexity={state.metrics.complexity} />
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                     <div className="p-10 rounded-[3.5rem] border border-white/10 bg-white/[0.01] flex flex-col justify-center min-h-[350px]">
-                        <h3 className="text-[11px] font-mono font-black mb-8 text-gray-500 uppercase tracking-[0.5em]">Efficiency_Index</h3>
-                        <EnergyScoreChart score={state.review?.score || Math.max(1, 10 - Math.floor(state.metrics.complexity * 1.5))} />
-                     </div>
-                     <GridTimeline region={state.region} />
-                  </div>
-               </div>
-
-               <div className="space-y-10">
-                  {state.isAnalyzing && (
-                    <div className="p-16 rounded-[4rem] border border-white/10 bg-white/[0.01] flex flex-col items-center justify-center space-y-8 animate-pulse">
-                       <BrainCircuit size={48} className="text-emerald-500 animate-bounce" />
-                       <p className="text-[10px] font-mono text-gray-500 uppercase tracking-[0.4em]">Synthesizing_AI_Review...</p>
-                    </div>
-                  )}
-                  
-                  {state.review && <AIReviewCard review={state.review} />}
-                  
-                  <TelemetryStream metrics={state.metrics} isVisible={expertMode} />
-
-                  {expertMode && (
-                    <div className="p-10 rounded-[3rem] border border-emerald-500/20 bg-emerald-500/[0.02] space-y-6 animate-in slide-in-from-right-10">
-                       <div className="flex items-center gap-3">
-                          <Terminal size={14} className="text-emerald-500" />
-                          <p className="text-[10px] font-mono text-emerald-500 uppercase tracking-[0.3em] font-black">Raw_AST_Telemetry</p>
-                       </div>
-                       <div className="space-y-4 font-mono text-[11px] text-emerald-500/70">
-                          <div className="flex justify-between border-b border-white/5 pb-2"><span>Structural_Complexity:</span> <span>{state.metrics.complexity}</span></div>
-                          <div className="flex justify-between border-b border-white/5 pb-2"><span>Memory_Pressure:</span> <span>{state.metrics.memPressure}</span></div>
-                          <div className="flex justify-between border-b border-white/5 pb-2"><span>Recursion_Status:</span> <span>{state.metrics.recursionDetected ? "ACTIVE" : "NONE"}</span></div>
-                          <div className="flex justify-between border-b border-white/5 pb-2"><span>Total_Artifact_Lines:</span> <span>{state.metrics.lineCount}</span></div>
-                       </div>
-                    </div>
-                  )}
-                
-                {state.metrics && !state.refactored && (
-                    <button onClick={handleRefactor} disabled={state.isRefactoring} className="w-full p-12 rounded-[4rem] border border-emerald-500/20 bg-emerald-500/[0.03] hover:bg-emerald-500/[0.06] transition-all group flex items-center justify-between text-left relative overflow-hidden shadow-2xl">
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 blur-[80px]" />
-                      <div className="space-y-4 relative z-10">
-                        <p className="text-emerald-500 font-black text-3xl tracking-tighter uppercase italic">Refactor_Module</p>
-                        <p className="text-emerald-500/40 text-[11px] uppercase tracking-[0.4em] font-mono font-black">AI_Autonomous_Opt_Engine</p>
-=======
             <div className="grid lg:grid-cols-2 gap-16">
               <div className="space-y-16">
-                <div className="p-8 border-2 border-white/20 bg-black pixel-border relative overflow-hidden flex flex-col justify-center min-h-[400px]">
-                  <h3 className="text-xs font-pixel mb-12 text-gray-500 uppercase tracking-widest text-center lg:text-left">OPERATIONAL_EFFICIENCY</h3>
+                <div className="p-8 border-2 border-white/20 bg-black relative overflow-hidden flex flex-col justify-center min-h-[400px]">
+                  <h3 className="text-xs mb-12 text-gray-500 uppercase tracking-widest text-center lg:text-left">OPERATIONAL_EFFICIENCY</h3>
                   <EnergyScoreChart score={state.review?.score || Math.max(1, 10 - Math.floor(state.metrics.complexity * 1.5))} />
 
                   {state.mode === 'architect' && (
                     <div className="mt-16 space-y-8">
                       <div className="flex items-center justify-between border-b-2 border-white/10 pb-2">
-                        <span className="text-[10px] font-pixel text-gray-500 uppercase">SCOPE_IMPACT_DISTRIBUTION</span>
+                        <span className="text-[10px] text-gray-500 uppercase">SCOPE_IMPACT_DISTRIBUTION</span>
                         <BarChart3 size={14} className="text-gray-600" />
                       </div>
                       <div className="space-y-4">
@@ -501,7 +396,7 @@ export default function AnalyzePage() {
                           const p = Math.min(100, (s.metrics?.estimatedCO2 / state.metrics.estimatedCO2) * 100) || 0;
                           return (
                             <div key={s.id} className="space-y-2">
-                              <div className="flex items-center justify-between text-[10px] font-mono uppercase"><span className="text-white">{s.name}</span><span className="text-emerald-500">{p.toFixed(1)}%</span></div>
+                              <div className="flex items-center justify-between text-[10px] uppercase"><span className="text-white">{s.name}</span><span className="text-emerald-500">{p.toFixed(1)}%</span></div>
                               <div className="h-2 w-full bg-white/10"><div className="h-full bg-emerald-500" style={{ width: `${p}%` }} /></div>
                             </div>
                           );
@@ -516,41 +411,40 @@ export default function AnalyzePage() {
 
               <div className="space-y-10">
                 {state.mode === 'upload' && state.review ? <AIReviewCard review={state.review} /> : (
-                  <div className="p-8 border-2 border-white/10 bg-black space-y-8 text-center lg:text-left pixel-border">
-                    <div className="flex items-center justify-center lg:justify-start gap-4 text-emerald-500"><Terminal size={20} /><h3 className="text-xl font-pixel uppercase">ARCHITECT_REVIEW</h3></div>
-                    <p className="text-gray-500 font-mono text-sm leading-relaxed">
-                        // ENGINE STATUS: ACTIVE <br />
-                      Analyzing multiple feature scopes for cumulative carbon density. Refactor suggestions disabled in synthesis mode.
+                  <div className="p-8 border-2 border-white/10 bg-black space-y-8 text-center lg:text-left">
+                    <div className="flex items-center justify-center lg:justify-start gap-4 text-emerald-500"><Terminal size={20} /><h3 className="text-xl uppercase font-bold">ARCHITECT_REVIEW</h3></div>
+                    <p className="text-gray-500 text-sm leading-relaxed">
+                      // ENGINE STATUS: ACTIVE <br />
+                      Analyzing multiple feature scopes for cumulative carbon density.
                     </p>
                     <div className="grid grid-cols-1 gap-4">
-                      <div className="p-4 bg-white/5 border border-white/10 flex items-center gap-6 pixel-border"><div className="text-emerald-500"><ShieldCheck size={18} /></div><div className="space-y-1"><p className="text-[10px] font-mono text-gray-500 uppercase">COMPLEXITY</p><p className="text-xl font-pixel text-white">O({state.metrics.complexity.toFixed(2)})</p></div></div>
-                      <div className="p-4 bg-white/5 border border-white/10 flex items-center gap-6 pixel-border"><div className="text-amber-500"><Zap size={18} /></div><div className="space-y-1"><p className="text-[10px] font-mono text-gray-500 uppercase">TOTAL_DRAW</p><p className="text-xl font-pixel text-white">{state.metrics.estimatedEnergy.toFixed(4)} KWH</p></div></div>
+                      <div className="p-4 bg-white/5 border border-white/10 flex items-center gap-6"><div className="text-emerald-500"><ShieldCheck size={18} /></div><div className="space-y-1"><p className="text-[10px] text-gray-500 uppercase">COMPLEXITY</p><p className="text-xl text-white font-bold">O({state.metrics.complexity.toFixed(2)})</p></div></div>
+                      <div className="p-4 bg-white/5 border border-white/10 flex items-center gap-6"><div className="text-amber-500"><Zap size={18} /></div><div className="space-y-1"><p className="text-[10px] text-gray-500 uppercase">TOTAL_DRAW</p><p className="text-xl text-white font-bold">{state.metrics.estimatedEnergy.toFixed(4)} KWH</p></div></div>
                     </div>
                   </div>
                 )}
 
                 {state.mode === 'upload' && (
                   !state.refactored ? (
-                    <button onClick={handleRefactor} disabled={state.isRefactoring} className="w-full p-8 border-2 border-emerald-500/50 bg-emerald-900/10 hover:bg-emerald-900/20 transition-all group flex items-center justify-between text-left relative overflow-hidden pixel-border">
+                    <button onClick={handleRefactor} disabled={state.isRefactoring} className="w-full p-8 border-2 border-emerald-500/50 bg-emerald-900/10 hover:bg-emerald-900/20 transition-all group flex items-center justify-between text-left relative overflow-hidden">
                       <div className="absolute top-0 right-0 w-20 h-20 bg-emerald-500/10 blur-3xl" />
                       <div className="space-y-2 relative z-10">
-                        <p className="text-emerald-500 font-pixel text-xl uppercase">REFACTOR_MODULE</p>
-                        <p className="text-emerald-500/60 text-[10px] uppercase font-mono">AUTONOMOUS_CODE_OPT</p>
->>>>>>> ff774b2d99b59d7ed5c43a1848ab38acfd22ffa8
+                        <p className="text-emerald-500 text-xl uppercase font-bold">REFACTOR_MODULE</p>
+                        <p className="text-emerald-500/60 text-[10px] uppercase">AUTONOMOUS_CODE_OPT</p>
                       </div>
                       {state.isRefactoring ? <Loader2 className="animate-spin text-emerald-500" /> : <Sparkles className="text-emerald-500 group-hover:scale-110 transition-transform" size={24} />}
                     </button>
                   ) : (
-                    <div className="p-8 border-2 border-emerald-500 bg-black space-y-6 animate-in zoom-in-95 pixel-border relative">
-                      <div className="flex items-center justify-between border-b-2 border-emerald-500/20 pb-4"><div className="flex items-center gap-4 text-emerald-500"><CheckCircle2 size={24} /><span className="text-lg font-pixel uppercase">OPTIMIZED_RESULT</span></div><button onClick={() => setState(p => ({ ...p, refactored: null }))} className="text-[10px] font-mono text-gray-500 uppercase hover:text-white transition-colors">DISMISS</button></div>
-                      <div className="bg-black/80 p-6 font-mono text-xs text-emerald-400 overflow-x-auto border border-white/10 max-h-[400px] custom-scrollbar selection:bg-emerald-500/20"><pre><code>{state.refactored.code}</code></pre></div>
-                      <div className="space-y-4"><div className="flex items-center gap-2"><Zap size={14} className="text-emerald-500" /><span className="text-[10px] font-pixel text-emerald-500 uppercase">SUMMARY</span></div><p className="text-sm text-gray-400 font-mono leading-relaxed">// {state.refactored.explanation}</p></div>
+                    <div className="p-8 border-2 border-emerald-500 bg-black space-y-6 animate-in zoom-in-95 relative">
+                      <div className="flex items-center justify-between border-b-2 border-emerald-500/20 pb-4"><div className="flex items-center gap-4 text-emerald-500"><CheckCircle2 size={24} /><span className="text-lg uppercase font-bold">OPTIMIZED_RESULT</span></div><button onClick={() => setState(p => ({ ...p, refactored: null }))} className="text-[10px] text-gray-500 uppercase hover:text-white transition-colors">DISMISS</button></div>
+                      <div className="bg-black/80 p-6 text-xs text-emerald-400 overflow-x-auto border border-white/10 max-h-[400px] custom-scrollbar selection:bg-emerald-500/20"><pre><code>{state.refactored.code}</code></pre></div>
+                      <div className="space-y-4"><div className="flex items-center gap-2"><Zap size={14} className="text-emerald-500" /><span className="text-[10px] text-emerald-500 uppercase">SUMMARY</span></div><p className="text-sm text-gray-400 leading-relaxed">// {state.refactored.explanation}</p></div>
                     </div>
                   )
                 )}
 
-                <Link href="/dashboard" className="w-full p-8 border-2 border-white/10 bg-black hover:bg-white hover:text-black transition-colors flex items-center justify-between group pixel-border">
-                  <div className="space-y-1"><p className="text-lg font-pixel uppercase transition-colors">PROTOCOL_VAULT</p><p className="text-[10px] font-mono text-gray-500 uppercase group-hover:text-black transition-colors">VIEW_HISTORICAL_LEDGER</p></div>
+                <Link href="/dashboard" className="w-full p-8 border-2 border-white/10 bg-black hover:bg-white hover:text-black transition-colors flex items-center justify-between group">
+                  <div className="space-y-1"><p className="text-lg uppercase font-bold transition-colors">PROTOCOL_VAULT</p><p className="text-[10px] text-gray-500 uppercase group-hover:text-black transition-colors">VIEW_HISTORICAL_LEDGER</p></div>
                   <ArrowRight size={24} className="text-gray-500 group-hover:text-black group-hover:translate-x-2 transition-all" />
                 </Link>
               </div>
