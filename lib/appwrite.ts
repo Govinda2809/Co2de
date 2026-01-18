@@ -31,13 +31,13 @@ export function isAppwriteConfigured(): boolean {
  */
 function sanitizeForAppwrite(data: Record<string, any>): Record<string, any> {
   const result: Record<string, any> = {};
-  
+
   for (const [key, value] of Object.entries(data)) {
     // Skip undefined/null
     if (value === undefined || value === null) {
       continue;
     }
-    
+
     // Handle different types
     if (typeof value === 'boolean') {
       result[key] = value;
@@ -55,7 +55,7 @@ function sanitizeForAppwrite(data: Record<string, any>): Record<string, any> {
       result[key] = JSON.stringify(value);
     }
   }
-  
+
   return result;
 }
 
@@ -68,7 +68,7 @@ export async function createAnalysisDocument(userId: string, data: Record<string
   }
 
   const sanitized = sanitizeForAppwrite(data);
-  
+
   try {
     return await databases.createDocument(
       DATABASE_ID,
@@ -83,7 +83,7 @@ export async function createAnalysisDocument(userId: string, data: Record<string
     );
   } catch (error: any) {
     console.error("createAnalysisDocument error:", error);
-    
+
     if (error.code === 401) {
       throw new Error("Not authenticated. Please log in.");
     }
@@ -93,7 +93,7 @@ export async function createAnalysisDocument(userId: string, data: Record<string
     if (error.code === 400) {
       throw new Error(`Invalid data: ${error.message}`);
     }
-    
+
     throw new Error(error.message || "Failed to save analysis.");
   }
 }
@@ -112,18 +112,18 @@ export async function listUserAnalyses(userId: string, limit = 50) {
       COLLECTION_ID,
       [
         Query.equal('userId', userId),
-        Query.orderDesc('createdAt'),
+        Query.orderDesc('$createdAt'),
         Query.limit(limit)
       ]
     );
     return response.documents;
   } catch (error: any) {
     console.error("listUserAnalyses error:", error);
-    
+
     if (error.code === 404) {
       throw new Error("Collection not found.");
     }
-    
+
     throw new Error(error.message || "Failed to fetch analyses.");
   }
 }
