@@ -60,7 +60,7 @@ export default function DashboardPage() {
   }, [user, authLoading, fetchAnalyses]);
 
   useEffect(() => {
-    if (!user || !isAppwriteConfigured()) return;
+    if (!user || !DATABASE_ID || !COLLECTION_ID) return;
     const channel = `databases.${DATABASE_ID}.collections.${COLLECTION_ID}.documents`;
     const unsubscribe = client.subscribe(channel, (response) => {
       const payload = response.payload as any;
