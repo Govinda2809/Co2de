@@ -123,7 +123,7 @@ export default function DashboardPage() {
   const deleteAnalysis = async (id: string, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!isAppwriteConfigured()) return;
+    if (!DATABASE_ID || !COLLECTION_ID) return;
     if (!confirm("Confirm deletion?")) return;
     try {
       await deleteAnalysisDocument(id);
