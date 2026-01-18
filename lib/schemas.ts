@@ -88,7 +88,7 @@ export const AnalysisItemSchema = z.object({
   userId: z.string().optional(),
   createdAt: z.string(),
   engineVersion: z.string().default('5.0.0-delta'),
-  
+
   // File Informatics
   fileName: z.string().min(1),
   fileSize: z.number().nonnegative(),
@@ -114,20 +114,20 @@ export const AnalysisItemSchema = z.object({
   complexity: z.number().optional(),         // Big O Factor
   memPressure: z.number().optional(),        // Allocation Factor
   recursionDetected: z.boolean().optional(),
-  
+
   // AI Insights (Enhanced)
-  bottleneck: z.string(),
-  optimization: z.string(),
-  improvement: z.string(),
+  bottleneck: z.string().optional(),
+  optimization: z.string().optional(),
+  improvement: z.string().optional(),
   summary: z.string().optional(),
   dependencies: z.array(DependencySchema).optional(),
   securityNotes: z.string().optional(),
   hotspots: z.array(HotspotSchema).optional(),
-  
+
   // Carbon Projections (NEW)
   carbonProjections: CarbonProjectionSchema.optional(),
   executionsPerDay: z.number().optional(),
-  
+
   // Delta Context
   optimizationDelta: z.number().optional(),
 });
