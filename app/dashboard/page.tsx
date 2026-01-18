@@ -3,11 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { FileCode, Clock, TrendingUp, Upload, Zap, RefreshCw, ShieldCheck, Search, Trash2, Download, Leaf, Calendar, ArrowUpRight } from "lucide-react";
-<<<<<<< HEAD
-import { client, databases, DATABASE_ID, COLLECTION_ID, isAppwriteConfigured, listUserAnalyses, deleteAnalysisDocument } from "@/lib/appwrite";
-=======
-import { client, databases, DATABASE_ID, COLLECTION_ID } from "@/lib/appwrite";
->>>>>>> 5faf0337932b65e8bcb657039634900a3178d8d1
+import { client, databases, DATABASE_ID, COLLECTION_ID, listUserAnalyses } from "@/lib/appwrite";
 import { useAuth } from "@/hooks/use-auth";
 import { AnalysisItemSchema, AnalysisItem } from "@/lib/schemas";
 import { cn } from "@/lib/utils";
