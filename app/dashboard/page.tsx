@@ -22,7 +22,7 @@ export default function DashboardPage() {
 
   const fetchAnalyses = useCallback(async () => {
     if (!user) return;
-    if (!isAppwriteConfigured()) {
+    if (!DATABASE_ID || !COLLECTION_ID) {
       setError("Appwrite not configured. Check environment variables.");
       setDataLoading(false);
       return;
