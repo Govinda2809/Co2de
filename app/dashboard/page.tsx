@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { FileCode, Clock, TrendingUp, Upload, Zap, RefreshCw, ShieldCheck, Search, Trash2, Download, Leaf, Calendar, ArrowUpRight } from "lucide-react";
-import { client, databases, DATABASE_ID, COLLECTION_ID, listUserAnalyses } from "@/lib/appwrite";
+import { client, DATABASE_ID, COLLECTION_ID, isAppwriteConfigured, listUserAnalyses, deleteAnalysisDocument } from "@/lib/appwrite";
 import { useAuth } from "@/hooks/use-auth";
 import { AnalysisItemSchema, AnalysisItem } from "@/lib/schemas";
 import { cn } from "@/lib/utils";
@@ -22,7 +22,7 @@ export default function DashboardPage() {
 
   const fetchAnalyses = useCallback(async () => {
     if (!user) return;
-    if (!DATABASE_ID || !COLLECTION_ID) {
+    if (!isAppwriteConfigured()) {
       setError("Appwrite not configured. Check environment variables.");
       setDataLoading(false);
       return;
@@ -56,7 +56,7 @@ export default function DashboardPage() {
   }, [user, authLoading, fetchAnalyses]);
 
   useEffect(() => {
-    if (!user || !DATABASE_ID || !COLLECTION_ID) return;
+    if (!user || !isAppwriteConfigured()) return;
     const channel = `databases.${DATABASE_ID}.collections.${COLLECTION_ID}.documents`;
     const unsubscribe = client.subscribe(channel, (response) => {
       const payload = response.payload as any;
@@ -123,10 +123,10 @@ export default function DashboardPage() {
   const deleteAnalysis = async (id: string, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!DATABASE_ID || !COLLECTION_ID) return;
+    if (!isAppwriteConfigured()) return;
     if (!confirm("Confirm deletion?")) return;
     try {
-      await databases.deleteDocument(DATABASE_ID, COLLECTION_ID, id);
+      await deleteAnalysisDocument(id);
       setAnalyses(prev => prev.filter(a => a.$id !== id));
     } catch (err) { alert("Deletion failed."); }
   };
